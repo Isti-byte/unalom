@@ -3,13 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Pong Multiplayer</title>
-  <style>
-    canvas {
-      background: #000;
-      display: block;
-      margin: 0 auto;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <canvas id="pong" width="800" height="500"></canvas>
@@ -64,31 +58,27 @@
   }
 
   function update() {
-    // Move paddles
     player1.y += player1.dy;
     player2.y += player2.dy;
 
-    // Paddle boundaries
     player1.y = Math.max(0, Math.min(canvas.height - player1.height, player1.y));
     player2.y = Math.max(0, Math.min(canvas.height - player2.height, player2.y));
 
-    // Move ball
     ball.x += ball.dx;
     ball.y += ball.dy;
 
-    // Wall collision
     if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
       ball.dy = -ball.dy;
     }
 
-    // Paddle collision
     let paddle = (ball.x < canvas.width / 2) ? player1 : player2;
 
-    if (ball.x - ball.radius < paddle.x + paddle.width &&
-        ball.x + ball.radius > paddle.x &&
-        ball.y < paddle.y + paddle.height &&
-        ball.y > paddle.y) {
-
+    if (
+      ball.x - ball.radius < paddle.x + paddle.width &&
+      ball.x + ball.radius > paddle.x &&
+      ball.y < paddle.y + paddle.height &&
+      ball.y > paddle.y
+    ) {
       let collidePoint = ball.y - (paddle.y + paddle.height / 2);
       collidePoint = collidePoint / (paddle.height / 2);
       let angle = collidePoint * Math.PI / 4;
@@ -99,7 +89,6 @@
       ball.speed += 0.5;
     }
 
-    // Scoring
     if (ball.x - ball.radius < 0) {
       player2.score++;
       resetBall();
@@ -109,14 +98,15 @@
     }
   }
 
+  // ✅ UPDATED RENDER FUNCTION — clear canvas, paddles black & white, ball white
   function render() {
-    drawRect(0, 0, canvas.width, canvas.height, "#000");
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
     drawNet();
-    drawText(player1.score, canvas.width/4, 50, "white");
-    drawText(player2.score, 3*canvas.width/4, 50, "white");
-    drawRect(player1.x, player1.y, player1.width, player1.height, "white");
-    drawRect(player2.x, player2.y, player2.width, player2.height, "white");
-    drawCircle(ball.x, ball.y, ball.radius, "white");
+    drawText(player1.score, canvas.width / 4, 50, "black");
+    drawText(player2.score, 3 * canvas.width / 4, 50, "black");
+    drawRect(player1.x, player1.y, player1.width, player1.height, "black"); // Left paddle
+    drawRect(player2.x, player2.y, player2.width, player2.height, "white"); // Right paddle
+    drawCircle(ball.x, ball.y, ball.radius, "white"); // Ball
   }
 
   function gameLoop() {
@@ -126,22 +116,18 @@
 
   setInterval(gameLoop, 1000 / 60);
 
-  // Controls
   const keys = {};
 
   document.addEventListener("keydown", (e) => {
     keys[e.key] = true;
-    // Player 1 (W/S)
     if (keys["w"]) player1.dy = -6;
     if (keys["s"]) player1.dy = 6;
-    // Player 2 (Arrow Keys)
     if (keys["ArrowUp"]) player2.dy = -6;
     if (keys["ArrowDown"]) player2.dy = 6;
   });
 
   document.addEventListener("keyup", (e) => {
     keys[e.key] = false;
-    // Stop movement if the released key was for a player
     if (e.key === "w" || e.key === "s") player1.dy = 0;
     if (e.key === "ArrowUp" || e.key === "ArrowDown") player2.dy = 0;
   });

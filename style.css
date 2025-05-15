@@ -1,16 +1,15 @@
-/* Green background */
 body {
   margin: 0;
-  background-color: green;
+  background-color: white; /* Or any neutral color */
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
 }
 
-/* Canvas with green background */
 canvas {
-  background-color: green;
+  background-color: green; /* Only the game area is green */
   border: 3px solid black;
   border-radius: 10px;
+  display: block;
 }

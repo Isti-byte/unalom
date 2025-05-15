@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pong Multiplayer</title>
+  <style>
+    canvas {
+      background: #000;
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+<canvas id="pong" width="800" height="500"></canvas>
+
+<script>
+  const canvas = document.getElementById("pong");
+  const ctx = canvas.getContext("2d");
+
+  const paddleWidth = 10, paddleHeight = 100;
+  const player1 = { x: 0, y: canvas.height/2 - paddleHeight/2, width: paddleWidth, height: paddleHeight, dy: 0, score: 0 };
+  const player2 = { x: canvas.width - paddleWidth, y: canvas.height/2 - paddleHeight/2, width: paddleWidth, height: paddleHeight, dy: 0, score: 0 };
+
+  const ball = {
+    x: canvas.width/2,
+    y: canvas.height/2,
+    radius: 8,
+    speed: 5,
+    dx: 5,
+    dy: 5
+  };
+
+  function drawRect(x, y, w, h, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w, h);
+  }
+
+  function drawCircle(x, y, r, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawText(text, x, y, color) {
+    ctx.fillStyle = color;
+    ctx.font = "32px Arial";
+    ctx.fillText(text, x, y);
+  }
+
+  function resetBall() {
+    ball.x = canvas.width/2;
+    ball.y = canvas.height/2;
+    ball.dx = -ball.dx;
+    ball.speed = 5;
+  }
+
+  function drawNet() {
+    for (let i = 0; i < canvas.height; i += 15) {
+      drawRect(canvas.width/2 - 1, i, 2, 10, "white");
+    }
+  }
+
+  function update() {
+    // Move paddles
+    player1.y += player1.dy;
+    player2.y += player2.dy;
+
+    // Paddle boundaries
+    player1.y = Math.max(0, Math.min(canvas.height - player1.height, player1.y));
+    player2.y = Math.max(0, Math.min(canvas.height - player2.height, player2.y));
+
+    // Move ball
+    ball.x += ball.dx;
+    ball.y += ball.dy;
+
+    // Wall collision
+    if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
+      ball.dy = -ball.dy;
+    }
+
+    // Paddle collision
+    let paddle = (ball.x < canvas.width / 2) ? player1 : player2;
+
+    if (ball.x - ball.radius < paddle.x + paddle.width &&
+        ball.x + ball.radius > paddle.x &&
+        ball.y < paddle.y + paddle.height &&
+        ball.y > paddle.y) {
+
+      let collidePoint = ball.y - (paddle.y + paddle.height / 2);
+      collidePoint = collidePoint / (paddle.height / 2);
+      let angle = collidePoint * Math.PI / 4;
+      let direction = (ball.x < canvas.width / 2) ? 1 : -1;
+
+      ball.dx = direction * ball.speed * Math.cos(angle);
+      ball.dy = ball.speed * Math.sin(angle);
+      ball.speed += 0.5;
+    }
+
+    // Scoring
+    if (ball.x - ball.radius < 0) {
+      player2.score++;
+      resetBall();
+    } else if (ball.x + ball.radius > canvas.width) {
+      player1.score++;
+      resetBall();
+    }
+  }
+
+  function render() {
+    drawRect(0, 0, canvas.width, canvas.height, "#000");
+    drawNet();
+    drawText(player1.score, canvas.width/4, 50, "white");
+    drawText(player2.score, 3*canvas.width/4, 50, "white");
+    drawRect(player1.x, player1.y, player1.width, player1.height, "white");
+    drawRect(player2.x, player2.y, player2.width, player2.height, "white");
+    drawCircle(ball.x, ball.y, ball.radius, "white");
+  }
+
+  function gameLoop() {
+    update();
+    render();
+  }
+
+  setInterval(gameLoop, 1000 / 60);
+
+  // Controls
+  const keys = {};
+
+  document.addEventListener("keydown", (e) => {
+    keys[e.key] = true;
+    // Player 1 (W/S)
+    if (keys["w"]) player1.dy = -6;
+    if (keys["s"]) player1.dy = 6;
+    // Player 2 (Arrow Keys)
+    if (keys["ArrowUp"]) player2.dy = -6;
+    if (keys["ArrowDown"]) player2.dy = 6;
+  });
+
+  document.addEventListener("keyup", (e) => {
+    keys[e.key] = false;
+    // Stop movement if the released key was for a player
+    if (e.key === "w" || e.key === "s") player1.dy = 0;
+    if (e.key === "ArrowUp" || e.key === "ArrowDown") player2.dy = 0;
+  });
+</script>
+</body>
+</html>

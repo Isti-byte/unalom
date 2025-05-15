@@ -1,0 +1,16 @@
+/* Green background */
+body {
+  margin: 0;
+  background-color: green;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Canvas with green background */
+canvas {
+  background-color: green;
+  border: 3px solid black;
+  border-radius: 10px;
+}

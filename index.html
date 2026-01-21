@@ -6,11 +6,32 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<canvas id="pong" width="800" height="500"></canvas>
+<div id="startMenu" class="menu">
+  <div class="menu-content">
+    <h1>PONG</h1>
+    <p>Two Player Game</p>
+    <button id="startBtn" class="start-button">START GAME</button>
+  </div>
+</div>
+
+<div id="gameContainer" class="container" style="display:none;">
+  <div class="controls-info">
+    <h2>Controls</h2>
+    <p><strong>Player 1 (Left):</strong> W/S keys</p>
+    <p><strong>Player 2 (Right):</strong> Arrow Up/Down keys</p>
+    <button id="stopBtn">Stop Game</button>
+    <button id="resumeBtn" style="display:none;">Resume Game</button>
+    <button id="menuBtn">Back to Menu</button>
+  </div>
+  <canvas id="pong" width="800" height="500"></canvas>
+</div>
 
 <script>
   const canvas = document.getElementById("pong");
   const ctx = canvas.getContext("2d");
+  
+  let isPaused = false;
+  let gameIntervalId;
 
   const paddleWidth = 10, paddleHeight = 100;
   const player1 = { x: 0, y: canvas.height/2 - paddleHeight/2, width: paddleWidth, height: paddleHeight, dy: 0, score: 0 };
@@ -102,19 +123,70 @@
   function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
     drawNet();
-    drawText(player1.score, canvas.width / 4, 50, "black");
-    drawText(player2.score, 3 * canvas.width / 4, 50, "black");
+    
+    // Draw score labels and values
+    ctx.font = "16px Arial";
+    drawText("Player 1", canvas.width / 4 - 30, 30, "white");
+    ctx.font = "32px Arial";
+    drawText(player1.score, canvas.width / 4, 60, "white");
+    
+    ctx.font = "16px Arial";
+    drawText("Player 2", 3 * canvas.width / 4 - 30, 30, "white");
+    ctx.font = "32px Arial";
+    drawText(player2.score, 3 * canvas.width / 4, 60, "white");
+    
     drawRect(player1.x, player1.y, player1.width, player1.height, "black"); // Left paddle
     drawRect(player2.x, player2.y, player2.width, player2.height, "white"); // Right paddle
     drawCircle(ball.x, ball.y, ball.radius, "white"); // Ball
   }
 
   function gameLoop() {
-    update();
-    render();
+    if (!isPaused) {
+      update();
+      render();
+    }
   }
 
-  setInterval(gameLoop, 1000 / 60);
+  gameIntervalId = setInterval(gameLoop, 1000 / 60);
+  
+  const stopBtn = document.getElementById("stopBtn");
+  const resumeBtn = document.getElementById("resumeBtn");
+  const menuBtn = document.getElementById("menuBtn");
+  const startBtn = document.getElementById("startBtn");
+  const startMenu = document.getElementById("startMenu");
+  const gameContainer = document.getElementById("gameContainer");
+  
+  function startGame() {
+    startMenu.style.display = "none";
+    gameContainer.style.display = "flex";
+  }
+  
+  function goToMenu() {
+    isPaused = false;
+    gameContainer.style.display = "none";
+    startMenu.style.display = "flex";
+    stopBtn.style.display = "block";
+    resumeBtn.style.display = "none";
+    // Reset scores
+    player1.score = 0;
+    player2.score = 0;
+    resetBall();
+  }
+  
+  startBtn.addEventListener("click", startGame);
+  menuBtn.addEventListener("click", goToMenu);
+  
+  stopBtn.addEventListener("click", () => {
+    isPaused = true;
+    stopBtn.style.display = "none";
+    resumeBtn.style.display = "block";
+  });
+  
+  resumeBtn.addEventListener("click", () => {
+    isPaused = false;
+    stopBtn.style.display = "block";
+    resumeBtn.style.display = "none";
+  });
 
   const keys = {};
 

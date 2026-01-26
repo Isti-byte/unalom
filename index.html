@@ -16,18 +16,22 @@
 </div>
 
 <div id="gameContainer" class="container" style="display:none;">
-  <div class="controls-info">
-    <h2 id="gameMode">2 Players</h2>
-    <h3>Controls</h3>
-    <p><strong>Player 1 (Left):</strong> W/S keys</p>
-    <p id="player2Controls"><strong>Player 2 (Right):</strong> Arrow Up/Down keys</p>
-    <button id="stopBtn">Stop Game</button>
-    <button id="resumeBtn" style="display:none;">Resume Game</button>
-    <button id="menuBtn">Back to Menu</button>
-  </div>
-  <div class="game-area">
+  <div class="left-section">
     <canvas id="player1Canvas" width="100" height="500" class="player-canvas"></canvas>
+  </div>
+  <div class="center-section">
+    <div class="controls-info">
+      <h2 id="gameMode">2 Players</h2>
+      <h3>Controls</h3>
+      <p><strong>Player 1 (Left):</strong> W/S keys</p>
+      <p id="player2Controls"><strong>Player 2 (Right):</strong> Arrow Up/Down keys</p>
+      <button id="stopBtn">Stop Game</button>
+      <button id="resumeBtn" style="display:none;">Resume Game</button>
+      <button id="menuBtn">Back to Menu</button>
+    </div>
     <canvas id="pong" width="800" height="500"></canvas>
+  </div>
+  <div class="right-section">
     <canvas id="player2Canvas" width="100" height="500" class="player-canvas"></canvas>
   </div>
 </div>

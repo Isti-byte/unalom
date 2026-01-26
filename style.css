@@ -64,8 +64,30 @@ body {
 
 .container {
   display: flex;
-  gap: 30px;
+  gap: 15px;
   align-items: center;
+  justify-content: center;
+}
+
+.left-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.center-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+}
+
+.right-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .game-area {

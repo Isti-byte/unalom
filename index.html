@@ -37,8 +37,38 @@
   let isSinglePlayer = false;
 
   const paddleWidth = 10, paddleHeight = 100;
-  const player1 = { x: 0, y: canvas.height/2 - paddleHeight/2, width: paddleWidth, height: paddleHeight, dy: 0, score: 0 };
-  const player2 = { x: canvas.width - paddleWidth, y: canvas.height/2 - paddleHeight/2, width: paddleWidth, height: paddleHeight, dy: 0, score: 0 };
+
+  // Player Model Class
+  class Player {
+    constructor(x, color) {
+      this.x = x;
+      this.y = canvas.height / 2 - paddleHeight / 2;
+      this.width = paddleWidth;
+      this.height = paddleHeight;
+      this.dy = 0;
+      this.score = 0;
+      this.color = color;
+    }
+
+    reset() {
+      this.y = canvas.height / 2 - paddleHeight / 2;
+      this.dy = 0;
+      this.score = 0;
+    }
+
+    update() {
+      this.y += this.dy;
+      this.y = Math.max(0, Math.min(canvas.height - this.height, this.y));
+    }
+
+    draw(ctx) {
+      ctx.fillStyle = this.color;
+      ctx.fillRect(this.x, this.y, this.width, this.height);
+    }
+  }
+
+  const player1 = new Player(0, "black");
+  const player2 = new Player(canvas.width - paddleWidth, "white");
 
   const ball = {
     x: canvas.width/2,
@@ -81,31 +111,14 @@
     }
   }
 
-  function updateAI() {
-    const paddleCenter = player2.y + player2.height / 2;
-    const ballCenter = ball.y;
-    const difficulty = 4;
-    
-    if (paddleCenter < ballCenter - 35) {
-      player2.dy = difficulty;
-    } else if (paddleCenter > ballCenter + 35) {
-      player2.dy = -difficulty;
-    } else {
-      player2.dy = 0;
-    }
-  }
-
   function update() {
-    player1.y += player1.dy;
+    player1.update();
     if (!isSinglePlayer) {
-      player2.y += player2.dy;
+      player2.update();
     } else {
       updateAI();
-      player2.y += player2.dy;
+      player2.update();
     }
-
-    player1.y = Math.max(0, Math.min(canvas.height - player1.height, player1.y));
-    player2.y = Math.max(0, Math.min(canvas.height - player2.height, player2.y));
 
     ball.x += ball.dx;
     ball.y += ball.dy;
@@ -141,12 +154,23 @@
     }
   }
 
-  // ✅ UPDATED RENDER FUNCTION — clear canvas, paddles black & white, ball white
+  function updateAI() {
+    const paddleCenter = player2.y + player2.height / 2;
+    const ballCenter = ball.y;
+    const difficulty = 4;
+    
+    if (paddleCenter < ballCenter - 35) {
+      player2.dy = difficulty;
+    } else if (paddleCenter > ballCenter + 35) {
+      player2.dy = -difficulty;
+    } else {
+      player2.dy = 0;
+    }
+  }
   function render() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawNet();
     
-    // Draw score labels and values
     ctx.font = "16px Arial";
     drawText("Player 1", canvas.width / 4 - 30, 30, "white");
     ctx.font = "32px Arial";
@@ -157,9 +181,9 @@
     ctx.font = "32px Arial";
     drawText(player2.score, 3 * canvas.width / 4, 60, "white");
     
-    drawRect(player1.x, player1.y, player1.width, player1.height, "black"); // Left paddle
-    drawRect(player2.x, player2.y, player2.width, player2.height, "white"); // Right paddle
-    drawCircle(ball.x, ball.y, ball.radius, "white"); // Ball
+    player1.draw(ctx);
+    player2.draw(ctx);
+    drawCircle(ball.x, ball.y, ball.radius, "white");
   }
 
   function gameLoop() {
@@ -195,9 +219,8 @@
     startMenu.style.display = "flex";
     stopBtn.style.display = "block";
     resumeBtn.style.display = "none";
-    // Reset scores
-    player1.score = 0;
-    player2.score = 0;
+    player1.reset();
+    player2.reset();
     resetBall();
   }
   

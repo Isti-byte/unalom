@@ -1,151 +1,130 @@
-body {
+* {
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
   background-color: #000;
+  color: #fff;
+  font-family: 'Arial', sans-serif;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  font-family: Arial, sans-serif;
 }
 
-.menu {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
+.screen {
+  display: none;
   width: 100%;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
 }
 
-.menu-content {
+.screen.active {
+  display: flex;
+}
+
+/* Menu Screen */
+.menu-container {
   text-align: center;
-  color: white;
-  background-color: #111;
-  padding: 60px 40px;
-  border-radius: 10px;
-  border: 3px solid white;
-  min-width: 300px;
 }
 
-.menu-content h1 {
-  font-size: 64px;
-  margin: 0 0 10px 0;
-  color: white;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+.menu-container h1 {
+  font-size: 72px;
+  margin-bottom: 40px;
+  text-shadow: 0 0 20px #fff;
+  letter-spacing: 4px;
 }
 
-.menu-content p {
-  font-size: 20px;
-  margin: 0 0 30px 0;
-  color: #aaa;
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.menu-content button {
-  display: block;
-  width: 100%;
-  margin: 10px 0;
+/* Game Screen */
+#gameScreen {
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
 }
 
-.start-button {
-  padding: 15px 40px;
-  font-size: 20px;
+.game-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: center;
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-width: 80px;
+}
+
+.player-info h3 {
+  font-size: 18px;
+}
+
+.player-info .score {
+  font-size: 48px;
   font-weight: bold;
-  background-color: white;
+  color: #fff;
+}
+
+canvas {
+  border: 3px solid #fff;
+  background-color: #000;
+  display: block;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.game-controls {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.controls-text {
+  display: flex;
+  gap: 30px;
+  font-size: 14px;
+}
+
+.controls-text p {
+  margin: 0;
+}
+
+#p2Text {
+  display: none;
+}
+
+/* Buttons */
+.btn {
+  padding: 15px 40px;
+  font-size: 18px;
+  font-weight: bold;
+  background-color: #fff;
   color: #000;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.3s;
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
-.start-button:hover {
+.btn:hover {
   background-color: #ddd;
   transform: scale(1.05);
 }
 
-.container {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-  justify-content: center;
-}
-
-.left-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.center-section {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  align-items: center;
-}
-
-.right-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.game-area {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.controls-info {
-  color: white;
-  background-color: #111;
-  padding: 20px;
-  border-radius: 8px;
-  border: 2px solid white;
-  min-width: 200px;
-}
-
-.controls-info h2 {
-  margin: 0 0 15px 0;
-  font-size: 20px;
-}
-
-.controls-info h3 {
-  margin: 10px 0 15px 0;
-  font-size: 16px;
-}
-
-.controls-info p {
-  margin: 10px 0;
-  font-size: 14px;
-}
-
-.controls-info button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  background-color: #333;
-  color: white;
-  border: 2px solid white;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-  transition: 0.3s;
-}
-
-.controls-info button:hover {
-  background-color: #555;
-}
-
-canvas {
-  background-color: #000;
-  border: 3px solid white;
-  border-radius: 0px;
-  display: block;
-}
-
-.player-canvas {
-  border: 2px solid #666;
-  background-color: #000;
+.btn:active {
+  transform: scale(0.95);
 }

@@ -79,7 +79,7 @@
     }
   }
 
-  const player1 = new Player(canvas.width - paddleHeight, "white");
+  const player1 = new Player(0, "black");
   const player2 = new Player(canvas.width - paddleWidth, "white");
 
   const ball = {
@@ -224,8 +224,15 @@
       render();
     }
   }
-
-  gameIntervalId = setInterval(gameLoop, 1000 / 60);
+  
+  function startGameLoop() {
+    if (gameIntervalId) clearInterval(gameIntervalId);
+    gameIntervalId = setInterval(gameLoop, 1000 / 60);
+  }
+  
+  function stopGameLoop() {
+    if (gameIntervalId) clearInterval(gameIntervalId);
+  }
   
   const stopBtn = document.getElementById("stopBtn");
   const resumeBtn = document.getElementById("resumeBtn");
@@ -243,10 +250,12 @@
     player2Controls.style.display = singlePlayer ? "none" : "block";
     startMenu.style.display = "none";
     gameContainer.style.display = "flex";
+    startGameLoop();
   }
   
   function goToMenu() {
     isPaused = false;
+    stopGameLoop();
     gameContainer.style.display = "none";
     startMenu.style.display = "flex";
     stopBtn.style.display = "block";

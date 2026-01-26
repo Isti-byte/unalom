@@ -18,6 +18,19 @@
     </div>
   </div>
 
+  <!-- Difficulty Selection Screen -->
+  <div id="difficultyScreen" class="screen">
+    <div class="menu-container">
+      <h1>SELECT DIFFICULTY</h1>
+      <div class="menu-buttons">
+        <button class="btn" onclick="startGameWithDifficulty('easy')">EASY</button>
+        <button class="btn" onclick="startGameWithDifficulty('medium')">MEDIUM</button>
+        <button class="btn" onclick="startGameWithDifficulty('hard')">HARD</button>
+        <button class="btn" onclick="goToMenu()">BACK</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Game Screen -->
   <div id="gameScreen" class="screen">
     <div class="game-wrapper">
@@ -47,6 +60,7 @@
 
     // Game Variables
     let gameMode = 2; // 1 or 2 players
+    let difficulty = 'medium'; // easy, medium, hard
     let isPaused = false;
     let gameRunning = true;
 
@@ -205,10 +219,25 @@
       const paddle = player2;
       const dy = ball.y - (paddle.y + paddle.height / 2);
       
-      if (dy < -35) {
-        paddle.dy = -paddle.speed;
-      } else if (dy > 35) {
-        paddle.dy = paddle.speed;
+      let speed = paddle.speed;
+      let threshold = 35;
+      
+      // Adjust AI difficulty
+      if (difficulty === 'easy') {
+        speed = 2; // Slower
+        threshold = 50; // Less responsive
+      } else if (difficulty === 'medium') {
+        speed = 4; // Normal
+        threshold = 35;
+      } else if (difficulty === 'hard') {
+        speed = 6; // Faster
+        threshold = 20; // More responsive
+      }
+      
+      if (dy < -threshold) {
+        paddle.dy = -speed;
+      } else if (dy > threshold) {
+        paddle.dy = speed;
       } else {
         paddle.dy = 0;
       }
@@ -257,7 +286,33 @@
 
     // Menu functions
     function startGame(players) {
-      gameMode = players;
+      if (players === 1) {
+        // Show difficulty selection for single player
+        document.getElementById('menuScreen').classList.remove('active');
+        document.getElementById('difficultyScreen').classList.add('active');
+      } else {
+        // Start 2 player game directly
+        gameMode = 2;
+        gameRunning = true;
+        isPaused = false;
+        player1.score = 0;
+        player2.score = 0;
+        player1.reset();
+        player2.reset();
+        ball.reset();
+        
+        const p2Text = document.getElementById('p2Text');
+        p2Text.style.display = 'block';
+        
+        document.getElementById('menuScreen').classList.remove('active');
+        document.getElementById('gameScreen').classList.add('active');
+        updateScores();
+      }
+    }
+
+    function startGameWithDifficulty(diff) {
+      difficulty = diff;
+      gameMode = 1;
       gameRunning = true;
       isPaused = false;
       player1.score = 0;
@@ -267,9 +322,9 @@
       ball.reset();
       
       const p2Text = document.getElementById('p2Text');
-      p2Text.style.display = gameMode === 2 ? 'block' : 'none';
+      p2Text.style.display = 'none';
       
-      document.getElementById('menuScreen').classList.remove('active');
+      document.getElementById('difficultyScreen').classList.remove('active');
       document.getElementById('gameScreen').classList.add('active');
       updateScores();
     }

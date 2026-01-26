@@ -39,6 +39,12 @@ body {
   color: #aaa;
 }
 
+.menu-content button {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+}
+
 .start-button {
   padding: 15px 40px;
   font-size: 20px;
@@ -74,6 +80,11 @@ body {
 .controls-info h2 {
   margin: 0 0 15px 0;
   font-size: 20px;
+}
+
+.controls-info h3 {
+  margin: 10px 0 15px 0;
+  font-size: 16px;
 }
 
 .controls-info p {

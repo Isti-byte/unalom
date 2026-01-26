@@ -9,16 +9,18 @@
 <div id="startMenu" class="menu">
   <div class="menu-content">
     <h1>PONG</h1>
-    <p>Two Player Game</p>
-    <button id="startBtn" class="start-button">START GAME</button>
+    <p>Select Game Mode</p>
+    <button id="onePlayerBtn" class="start-button">1 PLAYER (vs AI)</button>
+    <button id="twoPlayerBtn" class="start-button">2 PLAYERS</button>
   </div>
 </div>
 
 <div id="gameContainer" class="container" style="display:none;">
   <div class="controls-info">
-    <h2>Controls</h2>
+    <h2 id="gameMode">2 Players</h2>
+    <h3>Controls</h3>
     <p><strong>Player 1 (Left):</strong> W/S keys</p>
-    <p><strong>Player 2 (Right):</strong> Arrow Up/Down keys</p>
+    <p id="player2Controls"><strong>Player 2 (Right):</strong> Arrow Up/Down keys</p>
     <button id="stopBtn">Stop Game</button>
     <button id="resumeBtn" style="display:none;">Resume Game</button>
     <button id="menuBtn">Back to Menu</button>
@@ -32,6 +34,7 @@
   
   let isPaused = false;
   let gameIntervalId;
+  let isSinglePlayer = false;
 
   const paddleWidth = 10, paddleHeight = 100;
   const player1 = { x: 0, y: canvas.height/2 - paddleHeight/2, width: paddleWidth, height: paddleHeight, dy: 0, score: 0 };
@@ -78,9 +81,28 @@
     }
   }
 
+  function updateAI() {
+    const paddleCenter = player2.y + player2.height / 2;
+    const ballCenter = ball.y;
+    const difficulty = 4;
+    
+    if (paddleCenter < ballCenter - 35) {
+      player2.dy = difficulty;
+    } else if (paddleCenter > ballCenter + 35) {
+      player2.dy = -difficulty;
+    } else {
+      player2.dy = 0;
+    }
+  }
+
   function update() {
     player1.y += player1.dy;
-    player2.y += player2.dy;
+    if (!isSinglePlayer) {
+      player2.y += player2.dy;
+    } else {
+      updateAI();
+      player2.y += player2.dy;
+    }
 
     player1.y = Math.max(0, Math.min(canvas.height - player1.height, player1.y));
     player2.y = Math.max(0, Math.min(canvas.height - player2.height, player2.y));
@@ -152,11 +174,17 @@
   const stopBtn = document.getElementById("stopBtn");
   const resumeBtn = document.getElementById("resumeBtn");
   const menuBtn = document.getElementById("menuBtn");
-  const startBtn = document.getElementById("startBtn");
+  const onePlayerBtn = document.getElementById("onePlayerBtn");
+  const twoPlayerBtn = document.getElementById("twoPlayerBtn");
   const startMenu = document.getElementById("startMenu");
   const gameContainer = document.getElementById("gameContainer");
+  const gameMode = document.getElementById("gameMode");
+  const player2Controls = document.getElementById("player2Controls");
   
-  function startGame() {
+  function startGame(singlePlayer) {
+    isSinglePlayer = singlePlayer;
+    gameMode.textContent = singlePlayer ? "1 Player vs AI" : "2 Players";
+    player2Controls.style.display = singlePlayer ? "none" : "block";
     startMenu.style.display = "none";
     gameContainer.style.display = "flex";
   }
@@ -173,7 +201,8 @@
     resetBall();
   }
   
-  startBtn.addEventListener("click", startGame);
+  onePlayerBtn.addEventListener("click", () => startGame(true));
+  twoPlayerBtn.addEventListener("click", () => startGame(false));
   menuBtn.addEventListener("click", goToMenu);
   
   stopBtn.addEventListener("click", () => {

@@ -115,15 +115,52 @@
       }
 
       checkPaddleCollision(paddle) {
-        if (
-          this.x - this.radius < paddle.x + paddle.width &&
-          this.x + this.radius > paddle.x &&
-          this.y > paddle.y &&
-          this.y < paddle.y + paddle.height
-        ) {
-          this.speedX = -this.speedX;
-          this.speedY += paddle.dy * 0.2;
-          this.x = paddle.x + (paddle === player1 ? paddle.width : 0);
+        // Check if ball is within paddle's x range
+        let ballLeft = this.x - this.radius;
+        let ballRight = this.x + this.radius;
+        let ballTop = this.y - this.radius;
+        let ballBottom = this.y + this.radius;
+        
+        let paddleLeft = paddle.x;
+        let paddleRight = paddle.x + paddle.width;
+        let paddleTop = paddle.y;
+        let paddleBottom = paddle.y + paddle.height;
+
+        // Check for collision
+        if (ballLeft < paddleRight && ballRight > paddleLeft &&
+            ballTop < paddleBottom && ballBottom > paddleTop) {
+          
+          // Determine which side of paddle was hit
+          let overlapLeft = ballRight - paddleLeft;
+          let overlapRight = paddleRight - ballLeft;
+          let overlapTop = ballBottom - paddleTop;
+          let overlapBottom = paddleBottom - ballTop;
+
+          // Find minimum overlap
+          let minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+
+          if (minOverlap === overlapLeft || minOverlap === overlapRight) {
+            // Hit from left or right side
+            this.speedX = -this.speedX;
+            this.speedY += paddle.dy * 0.15;
+            
+            // Push ball out of paddle
+            if (paddle === player1) {
+              this.x = paddleRight + this.radius;
+            } else {
+              this.x = paddleLeft - this.radius;
+            }
+          } else {
+            // Hit from top or bottom
+            this.speedY = -this.speedY;
+            this.speedX += paddle.dy * 0.15;
+            
+            if (minOverlap === overlapTop) {
+              this.y = paddleTop - this.radius;
+            } else {
+              this.y = paddleBottom + this.radius;
+            }
+          }
         }
       }
 

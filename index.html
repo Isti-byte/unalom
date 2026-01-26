@@ -232,6 +232,19 @@
       if (!keys['arrowup'] && !keys['arrowdown']) player2.dy = 0;
     });
 
+    // Mobile control handler
+    function handleMobileControl(control, isPressed) {
+      mobileKeys[control] = isPressed;
+      
+      if (mobileKeys.p1Up) player1.dy = -player1.speed;
+      else if (mobileKeys.p1Down) player1.dy = player1.speed;
+      else player1.dy = 0;
+      
+      if (mobileKeys.p2Up) player2.dy = -player2.speed;
+      else if (mobileKeys.p2Down) player2.dy = player2.speed;
+      else if (gameMode === 2) player2.dy = 0;
+    }
+
     // AI for single player
     function updateAI() {
       const paddle = player2;
@@ -320,7 +333,20 @@
         ball.reset();
         
         const p2Text = document.getElementById('p2Text');
-        p2Text.style.display = 'block';
+        const p1ControlText = document.getElementById('p1ControlText');
+        const mobileControls = document.getElementById('mobileControls');
+        
+        if (isMobile) {
+          p1ControlText.innerHTML = '<strong>Player 1:</strong> Touch Left Side';
+          p2Text.innerHTML = '<strong>Player 2:</strong> Touch Right Side';
+          p2Text.style.display = 'block';
+          mobileControls.style.display = 'block';
+        } else {
+          p1ControlText.innerHTML = '<strong>Player 1:</strong> W / S keys';
+          p2Text.innerHTML = '<strong>Player 2:</strong> ↑ / ↓ keys';
+          p2Text.style.display = 'block';
+          mobileControls.style.display = 'none';
+        }
         
         document.getElementById('menuScreen').classList.remove('active');
         document.getElementById('gameScreen').classList.add('active');
@@ -340,7 +366,17 @@
       ball.reset();
       
       const p2Text = document.getElementById('p2Text');
-      p2Text.style.display = 'none';
+      const p1ControlText = document.getElementById('p1ControlText');
+      const mobileControls = document.getElementById('mobileControls');
+      
+      if (isMobile) {
+        p1ControlText.innerHTML = '<strong>Player 1:</strong> Touch Controls';
+        p2Text.style.display = 'none';
+        mobileControls.style.display = 'block';
+      } else {
+        p2Text.style.display = 'none';
+        mobileControls.style.display = 'none';
+      }
       
       document.getElementById('difficultyScreen').classList.remove('active');
       document.getElementById('gameScreen').classList.add('active');

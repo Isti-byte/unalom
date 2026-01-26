@@ -339,9 +339,10 @@
       gameRunning = false;
       isPaused = false;
       document.getElementById('gameScreen').classList.remove('active');
+      document.getElementById('difficultyScreen').classList.remove('active');
       document.getElementById('menuScreen').classList.add('active');
       const btn = document.querySelector('[onclick="pauseGame()"]');
-      btn.textContent = 'PAUSE';
+      if (btn) btn.textContent = 'PAUSE';
     }
 
     // Start game loop

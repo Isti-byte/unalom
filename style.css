@@ -68,6 +68,12 @@ body {
   align-items: center;
 }
 
+.game-area {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 .controls-info {
   color: white;
   background-color: #111;
@@ -115,4 +121,9 @@ canvas {
   border: 3px solid white;
   border-radius: 0px;
   display: block;
+}
+
+.player-canvas {
+  border: 2px solid #666;
+  background-color: #000;
 }

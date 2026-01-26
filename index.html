@@ -25,12 +25,20 @@
     <button id="resumeBtn" style="display:none;">Resume Game</button>
     <button id="menuBtn">Back to Menu</button>
   </div>
-  <canvas id="pong" width="800" height="500"></canvas>
+  <div class="game-area">
+    <canvas id="player1Canvas" width="100" height="500" class="player-canvas"></canvas>
+    <canvas id="pong" width="800" height="500"></canvas>
+    <canvas id="player2Canvas" width="100" height="500" class="player-canvas"></canvas>
+  </div>
 </div>
 
 <script>
   const canvas = document.getElementById("pong");
   const ctx = canvas.getContext("2d");
+  const player1Canvas = document.getElementById("player1Canvas");
+  const player1Ctx = player1Canvas.getContext("2d");
+  const player2Canvas = document.getElementById("player2Canvas");
+  const player2Ctx = player2Canvas.getContext("2d");
   
   let isPaused = false;
   let gameIntervalId;
@@ -184,6 +192,26 @@
     player1.draw(ctx);
     player2.draw(ctx);
     drawCircle(ball.x, ball.y, ball.radius, "white");
+
+    // Render Player 1 Canvas
+    player1Ctx.clearRect(0, 0, player1Canvas.width, player1Canvas.height);
+    player1Ctx.fillStyle = "#111";
+    player1Ctx.fillRect(0, 0, player1Canvas.width, player1Canvas.height);
+    player1Ctx.fillStyle = "white";
+    player1Ctx.font = "14px Arial";
+    player1Ctx.fillText("P1", 35, 20);
+    player1Ctx.font = "32px Arial";
+    player1Ctx.fillText(player1.score, 30, 60);
+
+    // Render Player 2 Canvas
+    player2Ctx.clearRect(0, 0, player2Canvas.width, player2Canvas.height);
+    player2Ctx.fillStyle = "#111";
+    player2Ctx.fillRect(0, 0, player2Canvas.width, player2Canvas.height);
+    player2Ctx.fillStyle = "white";
+    player2Ctx.font = "14px Arial";
+    player2Ctx.fillText("P2", 35, 20);
+    player2Ctx.font = "32px Arial";
+    player2Ctx.fillText(player2.score, 30, 60);
   }
 
   function gameLoop() {

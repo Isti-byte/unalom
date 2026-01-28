@@ -14,51 +14,6 @@
       <div class="menu-buttons">
         <button class="btn" onclick="startGame(1)">1 PLAYER</button>
         <button class="btn" onclick="startGame(2)">2 PLAYERS</button>
-        <button class="btn" onclick="showNetworkMenu()">NETWORK PLAY</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Network Menu -->
-  <div id="networkMenu" class="screen">
-    <div class="menu-container">
-      <h1>NETWORK PLAY</h1>
-      <div class="menu-buttons">
-        <button class="btn" onclick="showHostMenu()">HOST GAME</button>
-        <button class="btn" onclick="showJoinMenu()">JOIN GAME</button>
-        <button class="btn" onclick="goToMenu()">BACK</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Host Menu -->
-  <div id="hostMenu" class="screen">
-    <div class="menu-container">
-      <h1>HOST GAME</h1>
-      <div class="form-container">
-        <p>Server URL (default: ws://localhost:8080):</p>
-        <input type="text" id="hostServerUrl" placeholder="ws://localhost:8080" class="input-field">
-        <p id="hostStatus" style="margin-top: 20px; color: #ffaa00;"></p>
-        <div class="menu-buttons">
-          <button class="btn" onclick="hostGame()">START HOSTING</button>
-          <button class="btn" onclick="goToNetworkMenu()">BACK</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Join Menu -->
-  <div id="joinMenu" class="screen">
-    <div class="menu-container">
-      <h1>JOIN GAME</h1>
-      <div class="form-container">
-        <p>Server URL:</p>
-        <input type="text" id="joinServerUrl" placeholder="ws://192.168.1.100:8080" class="input-field">
-        <p id="joinStatus" style="margin-top: 20px; color: #ffaa00;"></p>
-        <div class="menu-buttons">
-          <button class="btn" onclick="joinGame()">CONNECT</button>
-          <button class="btn" onclick="goToNetworkMenu()">BACK</button>
-        </div>
       </div>
     </div>
   </div>
@@ -72,6 +27,62 @@
         <button class="btn" onclick="startGameWithDifficulty('medium')">MEDIUM</button>
         <button class="btn" onclick="startGameWithDifficulty('hard')">HARD</button>
         <button class="btn" onclick="goToMenu()">BACK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Test Mode Screen -->
+  <div id="testScreen" class="screen">
+    <div class="menu-container">
+      <h1>TEST MODE</h1>
+      <div class="test-container">
+        <div class="test-section">
+          <h3>Ball Speed Control</h3>
+          <div class="test-controls">
+            <label>Speed: <input type="range" id="ballSpeedSlider" min="1" max="10" value="3" onchange="testBallSpeed()"></label>
+            <p id="ballSpeedDisplay">Current: 3</p>
+          </div>
+        </div>
+        
+        <div class="test-section">
+          <h3>AI Difficulty</h3>
+          <div class="test-controls">
+            <button class="test-btn" onclick="testAIDifficulty('easy')">EASY</button>
+            <button class="test-btn" onclick="testAIDifficulty('medium')">MEDIUM</button>
+            <button class="test-btn" onclick="testAIDifficulty('hard')">HARD</button>
+            <p id="aiDiffDisplay">Current: medium</p>
+          </div>
+        </div>
+        
+        <div class="test-section">
+          <h3>Paddle Size</h3>
+          <div class="test-controls">
+            <label>Height: <input type="range" id="paddleSizeSlider" min="20" max="120" value="60" onchange="testPaddleSize()"></label>
+            <p id="paddleSizeDisplay">Current: 60px</p>
+          </div>
+        </div>
+        
+        <div class="test-section">
+          <h3>Canvas Size</h3>
+          <div class="test-controls">
+            <button class="test-btn" onclick="testCanvasSize(600, 300)">SMALL</button>
+            <button class="test-btn" onclick="testCanvasSize(800, 400)">MEDIUM</button>
+            <button class="test-btn" onclick="testCanvasSize(1000, 500)">LARGE</button>
+            <p id="canvasSizeDisplay">Current: 800x400</p>
+          </div>
+        </div>
+        
+        <div class="test-section">
+          <h3>Game Stats</h3>
+          <div class="test-controls">
+            <button class="test-btn" onclick="testResetScores()">RESET SCORES</button>
+            <button class="test-btn" onclick="testSetScore()">SET CUSTOM SCORE</button>
+            <p id="statsDisplay">P1: 0 | P2: 0</p>
+          </div>
+        </div>
+      </div>
+      <div class="menu-buttons">
+        <button class="btn" onclick="goToMenu()">EXIT TEST MODE</button>
       </div>
     </div>
   </div>
@@ -113,17 +124,15 @@
     const ctx = canvas.getContext('2d');
 
     // Game Variables
-    let gameMode = 2; // 1, 2, or 'network' for players
+    let gameMode = 2; // 1 or 2 players
     let difficulty = 'medium'; // easy, medium, hard
     let isPaused = false;
     let gameRunning = true;
     let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
-    // Network variables
-    let ws = null;
-    let isHost = false;
-    let isNetworkGame = false;
-    let playerNumber = 1; // 1 for host/player1, 2 for joiner/player2
+    // Test mode variables
+    let testModeActive = false;
+    let testMode_ballSpeed = 3;
     
     // Mobile controls state
     let mobileKeys = {
@@ -267,10 +276,15 @@
     const player2 = new Paddle(canvas.width - 20, canvas.height / 2 - 30);
     const ball = new Ball();
 
-    // Keyboard input
-    const keys = {};
     document.addEventListener('keydown', (e) => {
       keys[e.key.toLowerCase()] = true;
+      
+      // Test mode access (Ctrl+Shift+T)
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 't') {
+        enterTestMode();
+        return;
+      }
+      
       if (keys['w']) player1.dy = -player1.speed;
       if (keys['s']) player1.dy = player1.speed;
       if (keys['arrowup']) player2.dy = -player2.speed;
@@ -349,17 +363,6 @@
         player1.update();
         if (gameMode === 2) {
           player2.update();
-        } else if (gameMode === 'network') {
-          player2.update();
-          // Send player state over network
-          if (ws && ws.readyState === WebSocket.OPEN) {
-            const state = {
-              type: 'playerMove',
-              playerNumber: playerNumber,
-              paddleY: playerNumber === 1 ? player1.y : player2.y
-            };
-            ws.send(JSON.stringify(state));
-          }
         } else {
           updateAI();
           player2.update();
@@ -451,226 +454,79 @@
       btn.textContent = isPaused ? 'RESUME' : 'PAUSE';
     }
 
+    // Test Mode Functions
+    function enterTestMode() {
+      testModeActive = true;
+      document.getElementById('menuScreen').classList.remove('active');
+      document.getElementById('testScreen').classList.add('active');
+      updateTestDisplay();
+    }
+
+    function testBallSpeed() {
+      const slider = document.getElementById('ballSpeedSlider');
+      testMode_ballSpeed = parseInt(slider.value);
+      ball.speedX = testMode_ballSpeed;
+      ball.speedY = testMode_ballSpeed;
+      document.getElementById('ballSpeedDisplay').textContent = 'Current: ' + testMode_ballSpeed;
+    }
+
+    function testAIDifficulty(diff) {
+      difficulty = diff;
+      document.getElementById('aiDiffDisplay').textContent = 'Current: ' + diff;
+    }
+
+    function testPaddleSize() {
+      const slider = document.getElementById('paddleSizeSlider');
+      const newSize = parseInt(slider.value);
+      player1.height = newSize;
+      player2.height = newSize;
+      document.getElementById('paddleSizeDisplay').textContent = 'Current: ' + newSize + 'px';
+    }
+
+    function testCanvasSize(width, height) {
+      canvas.width = width;
+      canvas.height = height;
+      document.getElementById('canvasSizeDisplay').textContent = 'Current: ' + width + 'x' + height;
+    }
+
+    function testResetScores() {
+      player1.score = 0;
+      player2.score = 0;
+      document.getElementById('statsDisplay').textContent = 'P1: 0 | P2: 0';
+      updateScores();
+    }
+
+    function testSetScore() {
+      const p1Score = prompt('Enter Player 1 score:', player1.score);
+      if (p1Score !== null) {
+        player1.score = parseInt(p1Score) || 0;
+      }
+      const p2Score = prompt('Enter Player 2 score:', player2.score);
+      if (p2Score !== null) {
+        player2.score = parseInt(p2Score) || 0;
+      }
+      document.getElementById('statsDisplay').textContent = 'P1: ' + player1.score + ' | P2: ' + player2.score;
+      updateScores();
+    }
+
+    function updateTestDisplay() {
+      document.getElementById('ballSpeedDisplay').textContent = 'Current: ' + testMode_ballSpeed;
+      document.getElementById('aiDiffDisplay').textContent = 'Current: ' + difficulty;
+      document.getElementById('paddleSizeDisplay').textContent = 'Current: ' + player1.height + 'px';
+      document.getElementById('canvasSizeDisplay').textContent = 'Current: ' + canvas.width + 'x' + canvas.height;
+      document.getElementById('statsDisplay').textContent = 'P1: ' + player1.score + ' | P2: ' + player2.score;
+    }
+
     function goToMenu() {
       gameRunning = false;
       isPaused = false;
-      
-      // Close websocket if connected
-      if (ws) {
-        ws.close();
-        ws = null;
-      }
-      
+      testModeActive = false;
       document.getElementById('gameScreen').classList.remove('active');
       document.getElementById('difficultyScreen').classList.remove('active');
+      document.getElementById('testScreen').classList.remove('active');
       document.getElementById('menuScreen').classList.add('active');
       const btn = document.querySelector('[onclick="pauseGame()"]');
       if (btn) btn.textContent = 'PAUSE';
-    }
-
-    // Network functions
-    function showNetworkMenu() {
-      document.getElementById('menuScreen').classList.remove('active');
-      document.getElementById('networkMenu').classList.add('active');
-    }
-
-    function goToNetworkMenu() {
-      document.getElementById('hostMenu').classList.remove('active');
-      document.getElementById('joinMenu').classList.remove('active');
-      document.getElementById('networkMenu').classList.add('active');
-    }
-
-    function showHostMenu() {
-      document.getElementById('networkMenu').classList.remove('active');
-      document.getElementById('hostMenu').classList.add('active');
-      document.getElementById('hostStatus').textContent = '';
-    }
-
-    function showJoinMenu() {
-      document.getElementById('networkMenu').classList.remove('active');
-      document.getElementById('joinMenu').classList.add('active');
-      document.getElementById('joinStatus').textContent = '';
-    }
-
-    function hostGame() {
-      const serverUrl = document.getElementById('hostServerUrl').value || 'ws://localhost:8080';
-      const statusEl = document.getElementById('hostStatus');
-      
-      statusEl.textContent = 'Connecting to server...';
-      
-      try {
-        ws = new WebSocket(serverUrl);
-        
-        ws.onopen = function() {
-          statusEl.textContent = 'Connected! Waiting for opponent...';
-          statusEl.style.color = '#00ff00';
-          
-          // Send host message
-          ws.send(JSON.stringify({
-            type: 'host',
-            message: 'Hosting a game'
-          }));
-          
-          isHost = true;
-          playerNumber = 1;
-          isNetworkGame = true;
-        };
-        
-        ws.onmessage = function(event) {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === 'gameStart') {
-            statusEl.textContent = 'Opponent connected! Starting game...';
-            setTimeout(() => {
-              startNetworkGame();
-            }, 1000);
-          } else if (data.type === 'playerMove') {
-            // Update opponent's paddle
-            if (data.playerNumber === 2) {
-              player2.y = data.paddleY;
-            }
-          }
-        };
-        
-        ws.onerror = function(error) {
-          statusEl.textContent = 'Connection error! Check server URL.';
-          statusEl.style.color = '#ff0000';
-          console.error('WebSocket error:', error);
-        };
-        
-        ws.onclose = function() {
-          if (isNetworkGame) {
-            statusEl.textContent = 'Connection closed.';
-            statusEl.style.color = '#ff0000';
-          }
-        };
-      } catch (e) {
-        statusEl.textContent = 'Invalid server URL!';
-        statusEl.style.color = '#ff0000';
-        console.error('Error:', e);
-      }
-    }
-
-    function joinGame() {
-      const serverUrl = document.getElementById('joinServerUrl').value;
-      const statusEl = document.getElementById('joinStatus');
-      
-      if (!serverUrl) {
-        statusEl.textContent = 'Please enter a server URL!';
-        statusEl.style.color = '#ff0000';
-        return;
-      }
-      
-      statusEl.textContent = 'Connecting to game...';
-      
-      try {
-        ws = new WebSocket(serverUrl);
-        
-        ws.onopen = function() {
-          statusEl.textContent = 'Connected! Joining game...';
-          statusEl.style.color = '#00ff00';
-          
-          // Send join message
-          ws.send(JSON.stringify({
-            type: 'join',
-            message: 'Joining the game'
-          }));
-          
-          isHost = false;
-          playerNumber = 2;
-          isNetworkGame = true;
-        };
-        
-        ws.onmessage = function(event) {
-          const data = JSON.parse(event.data);
-          
-          if (data.type === 'gameStart') {
-            statusEl.textContent = 'Game starting...';
-            setTimeout(() => {
-              startNetworkGame();
-            }, 500);
-          } else if (data.type === 'playerMove') {
-            // Update opponent's paddle
-            if (data.playerNumber === 1) {
-              player1.y = data.paddleY;
-            }
-          } else if (data.type === 'ballState') {
-            // Update ball state from host
-            ball.x = data.ballX;
-            ball.y = data.ballY;
-            ball.speedX = data.speedX;
-            ball.speedY = data.speedY;
-            player1.score = data.score1;
-            player2.score = data.score2;
-            updateScores();
-          }
-        };
-        
-        ws.onerror = function(error) {
-          statusEl.textContent = 'Connection error! Check server URL.';
-          statusEl.style.color = '#ff0000';
-          console.error('WebSocket error:', error);
-        };
-        
-        ws.onclose = function() {
-          if (isNetworkGame) {
-            statusEl.textContent = 'Connection closed.';
-            statusEl.style.color = '#ff0000';
-          }
-        };
-      } catch (e) {
-        statusEl.textContent = 'Invalid server URL!';
-        statusEl.style.color = '#ff0000';
-        console.error('Error:', e);
-      }
-    }
-
-    function startNetworkGame() {
-      gameMode = 'network';
-      gameRunning = true;
-      isPaused = false;
-      player1.score = 0;
-      player2.score = 0;
-      player1.reset();
-      player2.reset();
-      ball.reset();
-      
-      const p2Text = document.getElementById('p2Text');
-      const p1ControlText = document.getElementById('p1ControlText');
-      const mobileControls = document.getElementById('mobileControls');
-      
-      if (playerNumber === 1) {
-        // Host controls player 1
-        if (isMobile) {
-          p1ControlText.innerHTML = '<strong>You (Player 1):</strong> Touch Left Side';
-          p2Text.innerHTML = '<strong>Opponent (Player 2):</strong> Remote';
-        } else {
-          p1ControlText.innerHTML = '<strong>You (Player 1):</strong> W / S keys';
-          p2Text.innerHTML = '<strong>Opponent (Player 2):</strong> Remote';
-        }
-      } else {
-        // Joiner controls player 2
-        if (isMobile) {
-          p1ControlText.innerHTML = '<strong>Opponent (Player 1):</strong> Remote';
-          p2Text.innerHTML = '<strong>You (Player 2):</strong> Touch Right Side';
-        } else {
-          p1ControlText.innerHTML = '<strong>Opponent (Player 1):</strong> Remote';
-          p2Text.innerHTML = '<strong>You (Player 2):</strong> ↑ / ↓ keys';
-        }
-      }
-      
-      p2Text.style.display = 'block';
-      
-      if (isMobile) {
-        mobileControls.style.display = 'block';
-      } else {
-        mobileControls.style.display = 'none';
-      }
-      
-      document.getElementById('hostMenu').classList.remove('active');
-      document.getElementById('joinMenu').classList.remove('active');
-      document.getElementById('gameScreen').classList.add('active');
-      updateScores();
     }
 
     // Start game loop

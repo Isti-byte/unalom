@@ -81,6 +81,14 @@
             <p id="statsDisplay">P1: 0 | P2: 0</p>
           </div>
         </div>
+        
+        <div class="test-section">
+          <h3>Start Game</h3>
+          <div class="test-controls">
+            <button class="test-btn" onclick="startTestGame(1)">PLAY vs AI</button>
+            <button class="test-btn" onclick="startTestGame(2)">PLAY LOCAL 2P</button>
+          </div>
+        </div>
       </div>
       <div class="menu-buttons">
         <button class="btn" onclick="goToMenu()">EXIT TEST MODE</button>
@@ -134,6 +142,7 @@
     // Test mode variables
     let testModeActive = false;
     let testMode_ballSpeed = 3;
+    let testMode_playing = false;
     let titleClickCount = 0;
     let titleClickTimer = null;
     let mobileKeys = {
@@ -370,6 +379,13 @@
           updateAI();
           player2.update();
         }
+        
+        // Apply test mode ball speed if active
+        if (testMode_playing) {
+          ball.speedX = testMode_ballSpeed * (ball.speedX > 0 ? 1 : -1);
+          ball.speedY = testMode_ballSpeed * (ball.speedY > 0 ? 1 : -1);
+        }
+        
         ball.update();
 
         // Draw
@@ -539,10 +555,51 @@
       document.getElementById('statsDisplay').textContent = 'P1: ' + player1.score + ' | P2: ' + player2.score;
     }
 
+    function startTestGame(players) {
+      gameMode = players;
+      gameRunning = true;
+      isPaused = false;
+      testMode_playing = true;
+      player1.score = 0;
+      player2.score = 0;
+      player1.reset();
+      player2.reset();
+      ball.reset();
+      
+      const p2Text = document.getElementById('p2Text');
+      const p1ControlText = document.getElementById('p1ControlText');
+      const mobileControls = document.getElementById('mobileControls');
+      
+      if (isMobile) {
+        p1ControlText.innerHTML = '<strong>Player 1:</strong> Touch Left Side';
+        if (players === 2) {
+          p2Text.innerHTML = '<strong>Player 2:</strong> Touch Right Side';
+          p2Text.style.display = 'block';
+        } else {
+          p2Text.style.display = 'none';
+        }
+        mobileControls.style.display = 'block';
+      } else {
+        p1ControlText.innerHTML = '<strong>Player 1:</strong> W / S keys';
+        if (players === 2) {
+          p2Text.innerHTML = '<strong>Player 2:</strong> ↑ / ↓ keys';
+          p2Text.style.display = 'block';
+        } else {
+          p2Text.style.display = 'none';
+        }
+        mobileControls.style.display = 'none';
+      }
+      
+      document.getElementById('testScreen').classList.remove('active');
+      document.getElementById('gameScreen').classList.add('active');
+      updateScores();
+    }
+
     function goToMenu() {
       gameRunning = false;
       isPaused = false;
       testModeActive = false;
+      testMode_playing = false;
       document.getElementById('gameScreen').classList.remove('active');
       document.getElementById('difficultyScreen').classList.remove('active');
       document.getElementById('testScreen').classList.remove('active');

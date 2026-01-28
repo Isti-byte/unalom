@@ -10,10 +10,11 @@
   <!-- Main Menu -->
   <div id="menuScreen" class="screen active">
     <div class="menu-container">
-      <h1>PONG</h1>
+      <h1 id="titleClick" onclick="titleClicked()" style="cursor: pointer;">PONG</h1>
       <div class="menu-buttons">
         <button class="btn" onclick="startGame(1)">1 PLAYER</button>
         <button class="btn" onclick="startGame(2)">2 PLAYERS</button>
+        <button class="btn" onclick="enterTestMode()" id="ownerBtn" style="display: none; background-color: #ffaa00;">👑 OWNER MODE</button>
       </div>
     </div>
   </div>
@@ -133,8 +134,8 @@
     // Test mode variables
     let testModeActive = false;
     let testMode_ballSpeed = 3;
-    
-    // Mobile controls state
+    let titleClickCount = 0;
+    let titleClickTimer = null;
     let mobileKeys = {
       p1Up: false,
       p1Down: false,
@@ -452,6 +453,25 @@
       isPaused = !isPaused;
       const btn = event.target;
       btn.textContent = isPaused ? 'RESUME' : 'PAUSE';
+    }
+
+    // Owner Button Logic
+    function titleClicked() {
+      titleClickCount++;
+      
+      // Reset timer on new click
+      clearTimeout(titleClickTimer);
+      
+      if (titleClickCount === 7) {
+        // Reveal owner button
+        document.getElementById('ownerBtn').style.display = 'block';
+        titleClickCount = 0;
+      }
+      
+      // Reset count after 2 seconds of no clicks
+      titleClickTimer = setTimeout(() => {
+        titleClickCount = 0;
+      }, 2000);
     }
 
     // Test Mode Functions

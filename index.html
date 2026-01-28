@@ -454,11 +454,223 @@
     function goToMenu() {
       gameRunning = false;
       isPaused = false;
+      
+      // Close websocket if connected
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+      
       document.getElementById('gameScreen').classList.remove('active');
       document.getElementById('difficultyScreen').classList.remove('active');
       document.getElementById('menuScreen').classList.add('active');
       const btn = document.querySelector('[onclick="pauseGame()"]');
       if (btn) btn.textContent = 'PAUSE';
+    }
+
+    // Network functions
+    function showNetworkMenu() {
+      document.getElementById('menuScreen').classList.remove('active');
+      document.getElementById('networkMenu').classList.add('active');
+    }
+
+    function goToNetworkMenu() {
+      document.getElementById('hostMenu').classList.remove('active');
+      document.getElementById('joinMenu').classList.remove('active');
+      document.getElementById('networkMenu').classList.add('active');
+    }
+
+    function showHostMenu() {
+      document.getElementById('networkMenu').classList.remove('active');
+      document.getElementById('hostMenu').classList.add('active');
+      document.getElementById('hostStatus').textContent = '';
+    }
+
+    function showJoinMenu() {
+      document.getElementById('networkMenu').classList.remove('active');
+      document.getElementById('joinMenu').classList.add('active');
+      document.getElementById('joinStatus').textContent = '';
+    }
+
+    function hostGame() {
+      const serverUrl = document.getElementById('hostServerUrl').value || 'ws://localhost:8080';
+      const statusEl = document.getElementById('hostStatus');
+      
+      statusEl.textContent = 'Connecting to server...';
+      
+      try {
+        ws = new WebSocket(serverUrl);
+        
+        ws.onopen = function() {
+          statusEl.textContent = 'Connected! Waiting for opponent...';
+          statusEl.style.color = '#00ff00';
+          
+          // Send host message
+          ws.send(JSON.stringify({
+            type: 'host',
+            message: 'Hosting a game'
+          }));
+          
+          isHost = true;
+          playerNumber = 1;
+          isNetworkGame = true;
+        };
+        
+        ws.onmessage = function(event) {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'gameStart') {
+            statusEl.textContent = 'Opponent connected! Starting game...';
+            setTimeout(() => {
+              startNetworkGame();
+            }, 1000);
+          } else if (data.type === 'playerMove') {
+            // Update opponent's paddle
+            if (data.playerNumber === 2) {
+              player2.y = data.paddleY;
+            }
+          }
+        };
+        
+        ws.onerror = function(error) {
+          statusEl.textContent = 'Connection error! Check server URL.';
+          statusEl.style.color = '#ff0000';
+          console.error('WebSocket error:', error);
+        };
+        
+        ws.onclose = function() {
+          if (isNetworkGame) {
+            statusEl.textContent = 'Connection closed.';
+            statusEl.style.color = '#ff0000';
+          }
+        };
+      } catch (e) {
+        statusEl.textContent = 'Invalid server URL!';
+        statusEl.style.color = '#ff0000';
+        console.error('Error:', e);
+      }
+    }
+
+    function joinGame() {
+      const serverUrl = document.getElementById('joinServerUrl').value;
+      const statusEl = document.getElementById('joinStatus');
+      
+      if (!serverUrl) {
+        statusEl.textContent = 'Please enter a server URL!';
+        statusEl.style.color = '#ff0000';
+        return;
+      }
+      
+      statusEl.textContent = 'Connecting to game...';
+      
+      try {
+        ws = new WebSocket(serverUrl);
+        
+        ws.onopen = function() {
+          statusEl.textContent = 'Connected! Joining game...';
+          statusEl.style.color = '#00ff00';
+          
+          // Send join message
+          ws.send(JSON.stringify({
+            type: 'join',
+            message: 'Joining the game'
+          }));
+          
+          isHost = false;
+          playerNumber = 2;
+          isNetworkGame = true;
+        };
+        
+        ws.onmessage = function(event) {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'gameStart') {
+            statusEl.textContent = 'Game starting...';
+            setTimeout(() => {
+              startNetworkGame();
+            }, 500);
+          } else if (data.type === 'playerMove') {
+            // Update opponent's paddle
+            if (data.playerNumber === 1) {
+              player1.y = data.paddleY;
+            }
+          } else if (data.type === 'ballState') {
+            // Update ball state from host
+            ball.x = data.ballX;
+            ball.y = data.ballY;
+            ball.speedX = data.speedX;
+            ball.speedY = data.speedY;
+            player1.score = data.score1;
+            player2.score = data.score2;
+            updateScores();
+          }
+        };
+        
+        ws.onerror = function(error) {
+          statusEl.textContent = 'Connection error! Check server URL.';
+          statusEl.style.color = '#ff0000';
+          console.error('WebSocket error:', error);
+        };
+        
+        ws.onclose = function() {
+          if (isNetworkGame) {
+            statusEl.textContent = 'Connection closed.';
+            statusEl.style.color = '#ff0000';
+          }
+        };
+      } catch (e) {
+        statusEl.textContent = 'Invalid server URL!';
+        statusEl.style.color = '#ff0000';
+        console.error('Error:', e);
+      }
+    }
+
+    function startNetworkGame() {
+      gameMode = 'network';
+      gameRunning = true;
+      isPaused = false;
+      player1.score = 0;
+      player2.score = 0;
+      player1.reset();
+      player2.reset();
+      ball.reset();
+      
+      const p2Text = document.getElementById('p2Text');
+      const p1ControlText = document.getElementById('p1ControlText');
+      const mobileControls = document.getElementById('mobileControls');
+      
+      if (playerNumber === 1) {
+        // Host controls player 1
+        if (isMobile) {
+          p1ControlText.innerHTML = '<strong>You (Player 1):</strong> Touch Left Side';
+          p2Text.innerHTML = '<strong>Opponent (Player 2):</strong> Remote';
+        } else {
+          p1ControlText.innerHTML = '<strong>You (Player 1):</strong> W / S keys';
+          p2Text.innerHTML = '<strong>Opponent (Player 2):</strong> Remote';
+        }
+      } else {
+        // Joiner controls player 2
+        if (isMobile) {
+          p1ControlText.innerHTML = '<strong>Opponent (Player 1):</strong> Remote';
+          p2Text.innerHTML = '<strong>You (Player 2):</strong> Touch Right Side';
+        } else {
+          p1ControlText.innerHTML = '<strong>Opponent (Player 1):</strong> Remote';
+          p2Text.innerHTML = '<strong>You (Player 2):</strong> ↑ / ↓ keys';
+        }
+      }
+      
+      p2Text.style.display = 'block';
+      
+      if (isMobile) {
+        mobileControls.style.display = 'block';
+      } else {
+        mobileControls.style.display = 'none';
+      }
+      
+      document.getElementById('hostMenu').classList.remove('active');
+      document.getElementById('joinMenu').classList.remove('active');
+      document.getElementById('gameScreen').classList.add('active');
+      updateScores();
     }
 
     // Start game loop

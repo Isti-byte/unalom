@@ -277,6 +277,8 @@
     const player2 = new Paddle(canvas.width - 20, canvas.height / 2 - 30);
     const ball = new Ball();
 
+    // Keyboard input
+    const keys = {};
     document.addEventListener('keydown', (e) => {
       keys[e.key.toLowerCase()] = true;
       

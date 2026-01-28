@@ -14,6 +14,51 @@
       <div class="menu-buttons">
         <button class="btn" onclick="startGame(1)">1 PLAYER</button>
         <button class="btn" onclick="startGame(2)">2 PLAYERS</button>
+        <button class="btn" onclick="showNetworkMenu()">NETWORK PLAY</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Network Menu -->
+  <div id="networkMenu" class="screen">
+    <div class="menu-container">
+      <h1>NETWORK PLAY</h1>
+      <div class="menu-buttons">
+        <button class="btn" onclick="showHostMenu()">HOST GAME</button>
+        <button class="btn" onclick="showJoinMenu()">JOIN GAME</button>
+        <button class="btn" onclick="goToMenu()">BACK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Host Menu -->
+  <div id="hostMenu" class="screen">
+    <div class="menu-container">
+      <h1>HOST GAME</h1>
+      <div class="form-container">
+        <p>Server URL (default: ws://localhost:8080):</p>
+        <input type="text" id="hostServerUrl" placeholder="ws://localhost:8080" class="input-field">
+        <p id="hostStatus" style="margin-top: 20px; color: #ffaa00;"></p>
+        <div class="menu-buttons">
+          <button class="btn" onclick="hostGame()">START HOSTING</button>
+          <button class="btn" onclick="goToNetworkMenu()">BACK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Join Menu -->
+  <div id="joinMenu" class="screen">
+    <div class="menu-container">
+      <h1>JOIN GAME</h1>
+      <div class="form-container">
+        <p>Server URL:</p>
+        <input type="text" id="joinServerUrl" placeholder="ws://192.168.1.100:8080" class="input-field">
+        <p id="joinStatus" style="margin-top: 20px; color: #ffaa00;"></p>
+        <div class="menu-buttons">
+          <button class="btn" onclick="joinGame()">CONNECT</button>
+          <button class="btn" onclick="goToNetworkMenu()">BACK</button>
+        </div>
       </div>
     </div>
   </div>
@@ -68,11 +113,17 @@
     const ctx = canvas.getContext('2d');
 
     // Game Variables
-    let gameMode = 2; // 1 or 2 players
+    let gameMode = 2; // 1, 2, or 'network' for players
     let difficulty = 'medium'; // easy, medium, hard
     let isPaused = false;
     let gameRunning = true;
     let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // Network variables
+    let ws = null;
+    let isHost = false;
+    let isNetworkGame = false;
+    let playerNumber = 1; // 1 for host/player1, 2 for joiner/player2
     
     // Mobile controls state
     let mobileKeys = {
@@ -298,6 +349,17 @@
         player1.update();
         if (gameMode === 2) {
           player2.update();
+        } else if (gameMode === 'network') {
+          player2.update();
+          // Send player state over network
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            const state = {
+              type: 'playerMove',
+              playerNumber: playerNumber,
+              paddleY: playerNumber === 1 ? player1.y : player2.y
+            };
+            ws.send(JSON.stringify(state));
+          }
         } else {
           updateAI();
           player2.update();

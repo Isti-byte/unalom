@@ -330,16 +330,16 @@
       let speed = paddle.speed;
       let threshold = 35;
       
-      // Adjust AI difficulty
+      // Adjust AI difficulty - faster and more responsive as difficulty increases
       if (difficulty === 'easy') {
-        speed = 2; // Slower
-        threshold = 50; // Less responsive
+        speed = 2; // Slowest
+        threshold = 60; // Least responsive
       } else if (difficulty === 'medium') {
-        speed = 4; // Normal
+        speed = 5; // Medium
         threshold = 35;
       } else if (difficulty === 'hard') {
-        speed = 6; // Faster
-        threshold = 20; // More responsive
+        speed = 8; // Much faster
+        threshold = 15; // Most responsive
       }
       
       if (dy < -threshold) {

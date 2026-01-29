@@ -1,20 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pong Game</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+  <!-- Login Screen -->
+  <div id="loginScreen" class="screen active">
+    <div class="menu-container">
+      <h1>PONG ARENA</h1>
+      <div class="login-container">
+        <div class="login-form">
+          <h2>Login</h2>
+          <input type="text" id="usernameInput" placeholder="Enter username" class="login-input">
+          <input type="password" id="passwordInput" placeholder="Enter password" class="login-input">
+          <button class="btn" onclick="loginUser()">LOGIN</button>
+          <p class="login-text">Don't have an account? <span class="link" onclick="switchToRegister()">Register</span>
+          </p>
+          <p id="loginError" class="error-message"></p>
+        </div>
+        <div class="login-form" id="registerForm" style="display: none;">
+          <h2>Register</h2>
+          <input type="text" id="regUsernameInput" placeholder="Choose username" class="login-input">
+          <input type="password" id="regPasswordInput" placeholder="Choose password" class="login-input">
+          <input type="password" id="regPasswordConfirm" placeholder="Confirm password" class="login-input">
+          <button class="btn" onclick="registerUser()">REGISTER</button>
+          <p class="login-text">Already have an account? <span class="link" onclick="switchToLogin()">Login</span></p>
+          <p id="registerError" class="error-message"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Main Menu -->
-  <div id="menuScreen" class="screen active">
+  <div id="menuScreen" class="screen">
     <div class="menu-container">
       <h1 id="titleClick" onclick="titleClicked()" style="cursor: pointer;">PONG</h1>
       <div class="menu-buttons">
         <button class="btn" onclick="startGame(1)">1 PLAYER</button>
         <button class="btn" onclick="startGame(2)">2 PLAYERS</button>
-        <button class="btn" onclick="enterTestMode()" id="ownerBtn" style="display: none; background-color: #ffaa00;">👑 OWNER MODE</button>
+        <button class="btn" onclick="viewRanklist()">RANKLIST</button>
+        <button class="btn" onclick="logoutUser()" style="background-color: #ff6b6b;">LOGOUT</button>
+        <button class="btn" onclick="enterTestMode()" id="ownerBtn" style="display: none; background-color: #ffaa00;">👑
+          OWNER MODE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ranklist Screen -->
+  <div id="ranklistScreen" class="screen">
+    <div class="menu-container">
+      <h1>GLOBAL RANKLIST</h1>
+      <div class="ranklist-container">
+        <table class="ranklist-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Username</th>
+              <th>Wins</th>
+              <th>Losses</th>
+              <th>Win Rate</th>
+            </tr>
+          </thead>
+          <tbody id="ranklistBody">
+          </tbody>
+        </table>
+      </div>
+      <div class="menu-buttons">
+        <button class="btn" onclick="goToMenu()">BACK</button>
       </div>
     </div>
   </div>
@@ -40,11 +97,12 @@
         <div class="test-section">
           <h3>Ball Speed Control</h3>
           <div class="test-controls">
-            <label>Speed: <input type="range" id="ballSpeedSlider" min="1" max="10" value="3" onchange="testBallSpeed()"></label>
+            <label>Speed: <input type="range" id="ballSpeedSlider" min="1" max="10" value="3"
+                onchange="testBallSpeed()"></label>
             <p id="ballSpeedDisplay">Current: 3</p>
           </div>
         </div>
-        
+
         <div class="test-section">
           <h3>AI Difficulty</h3>
           <div class="test-controls">
@@ -54,15 +112,16 @@
             <p id="aiDiffDisplay">Current: medium</p>
           </div>
         </div>
-        
+
         <div class="test-section">
           <h3>Paddle Size</h3>
           <div class="test-controls">
-            <label>Height: <input type="range" id="paddleSizeSlider" min="20" max="120" value="60" onchange="testPaddleSize()"></label>
+            <label>Height: <input type="range" id="paddleSizeSlider" min="20" max="120" value="60"
+                onchange="testPaddleSize()"></label>
             <p id="paddleSizeDisplay">Current: 60px</p>
           </div>
         </div>
-        
+
         <div class="test-section">
           <h3>Canvas Size</h3>
           <div class="test-controls">
@@ -72,7 +131,7 @@
             <p id="canvasSizeDisplay">Current: 800x400</p>
           </div>
         </div>
-        
+
         <div class="test-section">
           <h3>Game Stats</h3>
           <div class="test-controls">
@@ -81,7 +140,7 @@
             <p id="statsDisplay">P1: 0 | P2: 0</p>
           </div>
         </div>
-        
+
         <div class="test-section">
           <h3>Start Game</h3>
           <div class="test-controls">
@@ -107,10 +166,14 @@
         <canvas id="gameCanvas" width="800" height="400"></canvas>
         <!-- Mobile touch controls -->
         <div class="mobile-controls" id="mobileControls" style="display:none;">
-          <div class="touch-zone left-zone" id="leftUp" ontouchstart="handleMobileControl('p1Up', true)" ontouchend="handleMobileControl('p1Up', false)">↑</div>
-          <div class="touch-zone right-zone" id="rightUp" ontouchstart="handleMobileControl('p2Up', true)" ontouchend="handleMobileControl('p2Up', false)">↑</div>
-          <div class="touch-zone left-zone bottom" id="leftDown" ontouchstart="handleMobileControl('p1Down', true)" ontouchend="handleMobileControl('p1Down', false)">↓</div>
-          <div class="touch-zone right-zone bottom" id="rightDown" ontouchstart="handleMobileControl('p2Down', true)" ontouchend="handleMobileControl('p2Down', false)">↓</div>
+          <div class="touch-zone left-zone" id="leftUp" ontouchstart="handleMobileControl('p1Up', true)"
+            ontouchend="handleMobileControl('p1Up', false)">↑</div>
+          <div class="touch-zone right-zone" id="rightUp" ontouchstart="handleMobileControl('p2Up', true)"
+            ontouchend="handleMobileControl('p2Up', false)">↑</div>
+          <div class="touch-zone left-zone bottom" id="leftDown" ontouchstart="handleMobileControl('p1Down', true)"
+            ontouchend="handleMobileControl('p1Down', false)">↓</div>
+          <div class="touch-zone right-zone bottom" id="rightDown" ontouchstart="handleMobileControl('p2Down', true)"
+            ontouchend="handleMobileControl('p2Down', false)">↓</div>
         </div>
       </div>
       <div class="player-info right">
@@ -139,6 +202,12 @@
     let gameRunning = true;
     let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
+    // User Authentication
+    const OWNER_USERNAME = 'hajdui';
+    let currentUser = null;
+    let users = JSON.parse(localStorage.getItem('pongUsers')) || {};
+    let userStats = JSON.parse(localStorage.getItem('pongStats')) || {};
+
     // Test mode variables
     let testModeActive = false;
     let testMode_ballSpeed = 3;
@@ -222,7 +291,7 @@
         let ballRight = this.x + this.radius;
         let ballTop = this.y - this.radius;
         let ballBottom = this.y + this.radius;
-        
+
         let paddleLeft = paddle.x;
         let paddleRight = paddle.x + paddle.width;
         let paddleTop = paddle.y;
@@ -230,8 +299,8 @@
 
         // Check for collision
         if (ballLeft < paddleRight && ballRight > paddleLeft &&
-            ballTop < paddleBottom && ballBottom > paddleTop) {
-          
+          ballTop < paddleBottom && ballBottom > paddleTop) {
+
           // Determine which side of paddle was hit
           let overlapLeft = ballRight - paddleLeft;
           let overlapRight = paddleRight - ballLeft;
@@ -245,7 +314,7 @@
             // Hit from left or right side
             this.speedX = -this.speedX;
             this.speedY += paddle.dy * 0.15;
-            
+
             // Push ball out of paddle
             if (paddle === player1) {
               this.x = paddleRight + this.radius;
@@ -256,7 +325,7 @@
             // Hit from top or bottom
             this.speedY = -this.speedY;
             this.speedX += paddle.dy * 0.15;
-            
+
             if (minOverlap === overlapTop) {
               this.y = paddleTop - this.radius;
             } else {
@@ -290,13 +359,13 @@
     const keys = {};
     document.addEventListener('keydown', (e) => {
       keys[e.key.toLowerCase()] = true;
-      
+
       // Test mode access (Ctrl+Shift+T)
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 't') {
         enterTestMode();
         return;
       }
-      
+
       if (keys['w']) player1.dy = -player1.speed;
       if (keys['s']) player1.dy = player1.speed;
       if (keys['arrowup']) player2.dy = -player2.speed;
@@ -312,11 +381,11 @@
     // Mobile control handler
     function handleMobileControl(control, isPressed) {
       mobileKeys[control] = isPressed;
-      
+
       if (mobileKeys.p1Up) player1.dy = -player1.speed;
       else if (mobileKeys.p1Down) player1.dy = player1.speed;
       else player1.dy = 0;
-      
+
       if (mobileKeys.p2Up) player2.dy = -player2.speed;
       else if (mobileKeys.p2Down) player2.dy = player2.speed;
       else if (gameMode === 2) player2.dy = 0;
@@ -326,10 +395,10 @@
     function updateAI() {
       const paddle = player2;
       const dy = ball.y - (paddle.y + paddle.height / 2);
-      
+
       let speed = paddle.speed;
       let threshold = 35;
-      
+
       // Adjust AI difficulty - faster and more responsive as difficulty increases
       if (difficulty === 'easy') {
         speed = 2; // Slowest
@@ -341,7 +410,7 @@
         speed = 8; // Much faster
         threshold = 15; // Most responsive
       }
-      
+
       if (dy < -threshold) {
         paddle.dy = -speed;
       } else if (dy > threshold) {
@@ -379,13 +448,13 @@
           updateAI();
           player2.update();
         }
-        
+
         // Apply test mode ball speed if active
         if (testMode_playing) {
           ball.speedX = testMode_ballSpeed * (ball.speedX > 0 ? 1 : -1);
           ball.speedY = testMode_ballSpeed * (ball.speedY > 0 ? 1 : -1);
         }
-        
+
         ball.update();
 
         // Draw
@@ -415,11 +484,11 @@
         player1.reset();
         player2.reset();
         ball.reset();
-        
+
         const p2Text = document.getElementById('p2Text');
         const p1ControlText = document.getElementById('p1ControlText');
         const mobileControls = document.getElementById('mobileControls');
-        
+
         if (isMobile) {
           p1ControlText.innerHTML = '<strong>Player 1:</strong> Touch Left Side';
           p2Text.innerHTML = '<strong>Player 2:</strong> Touch Right Side';
@@ -431,7 +500,7 @@
           p2Text.style.display = 'block';
           mobileControls.style.display = 'none';
         }
-        
+
         document.getElementById('menuScreen').classList.remove('active');
         document.getElementById('gameScreen').classList.add('active');
         updateScores();
@@ -448,11 +517,11 @@
       player1.reset();
       player2.reset();
       ball.reset();
-      
+
       const p2Text = document.getElementById('p2Text');
       const p1ControlText = document.getElementById('p1ControlText');
       const mobileControls = document.getElementById('mobileControls');
-      
+
       if (isMobile) {
         p1ControlText.innerHTML = '<strong>Player 1:</strong> Touch Controls';
         p2Text.style.display = 'none';
@@ -461,7 +530,7 @@
         p2Text.style.display = 'none';
         mobileControls.style.display = 'none';
       }
-      
+
       document.getElementById('difficultyScreen').classList.remove('active');
       document.getElementById('gameScreen').classList.add('active');
       updateScores();
@@ -476,16 +545,16 @@
     // Owner Button Logic
     function titleClicked() {
       titleClickCount++;
-      
+
       // Reset timer on new click
       clearTimeout(titleClickTimer);
-      
+
       if (titleClickCount === 7) {
         // Reveal owner button
         document.getElementById('ownerBtn').style.display = 'block';
         titleClickCount = 0;
       }
-      
+
       // Reset count after 2 seconds of no clicks
       titleClickTimer = setTimeout(() => {
         titleClickCount = 0;
@@ -565,11 +634,11 @@
       player1.reset();
       player2.reset();
       ball.reset();
-      
+
       const p2Text = document.getElementById('p2Text');
       const p1ControlText = document.getElementById('p1ControlText');
       const mobileControls = document.getElementById('mobileControls');
-      
+
       if (isMobile) {
         p1ControlText.innerHTML = '<strong>Player 1:</strong> Touch Left Side';
         if (players === 2) {
@@ -589,7 +658,7 @@
         }
         mobileControls.style.display = 'none';
       }
-      
+
       document.getElementById('testScreen').classList.remove('active');
       document.getElementById('gameScreen').classList.add('active');
       updateScores();
@@ -603,6 +672,7 @@
       document.getElementById('gameScreen').classList.remove('active');
       document.getElementById('difficultyScreen').classList.remove('active');
       document.getElementById('testScreen').classList.remove('active');
+      document.getElementById('ranklistScreen').classList.remove('active');
       document.getElementById('menuScreen').classList.add('active');
       const btn = document.querySelector('[onclick="pauseGame()"]');
       if (btn) btn.textContent = 'PAUSE';
@@ -610,6 +680,138 @@
 
     // Start game loop
     gameLoop();
+
+    // Authentication Functions
+    function loginUser() {
+      const username = document.getElementById('usernameInput').value.trim();
+      const password = document.getElementById('passwordInput').value;
+      const errorMsg = document.getElementById('loginError');
+      
+      errorMsg.textContent = '';
+      
+      if (!username || !password) {
+        errorMsg.textContent = 'Please enter username and password';
+        return;
+      }
+      
+      if (!users[username] || users[username] !== password) {
+        errorMsg.textContent = 'Invalid username or password';
+        return;
+      }
+      
+      currentUser = username;
+      if (username === OWNER_USERNAME) {
+        document.getElementById('ownerBtn').style.display = 'block';
+      }
+      
+      document.getElementById('loginScreen').classList.remove('active');
+      document.getElementById('menuScreen').classList.add('active');
+    }
+
+    function registerUser() {
+      const username = document.getElementById('regUsernameInput').value.trim();
+      const password = document.getElementById('regPasswordInput').value;
+      const confirm = document.getElementById('regPasswordConfirm').value;
+      const errorMsg = document.getElementById('registerError');
+      
+      errorMsg.textContent = '';
+      
+      if (!username || !password || !confirm) {
+        errorMsg.textContent = 'Please fill all fields';
+        return;
+      }
+      
+      if (username.length < 3) {
+        errorMsg.textContent = 'Username must be at least 3 characters';
+        return;
+      }
+      
+      if (password.length < 4) {
+        errorMsg.textContent = 'Password must be at least 4 characters';
+        return;
+      }
+      
+      if (password !== confirm) {
+        errorMsg.textContent = 'Passwords do not match';
+        return;
+      }
+      
+      if (users[username]) {
+        errorMsg.textContent = 'Username already exists';
+        return;
+      }
+      
+      users[username] = password;
+      userStats[username] = { wins: 0, losses: 0 };
+      localStorage.setItem('pongUsers', JSON.stringify(users));
+      localStorage.setItem('pongStats', JSON.stringify(userStats));
+      
+      document.getElementById('regUsernameInput').value = '';
+      document.getElementById('regPasswordInput').value = '';
+      document.getElementById('regPasswordConfirm').value = '';
+      
+      switchToLogin();
+      document.getElementById('loginError').textContent = 'Registration successful! Please login.';
+    }
+
+    function switchToRegister() {
+      document.querySelector('.login-form').style.display = 'none';
+      document.getElementById('registerForm').style.display = 'block';
+    }
+
+    function switchToLogin() {
+      document.querySelector('.login-form').style.display = 'block';
+      document.getElementById('registerForm').style.display = 'none';
+    }
+
+    function logoutUser() {
+      currentUser = null;
+      document.getElementById('ownerBtn').style.display = 'none';
+      document.getElementById('menuScreen').classList.remove('active');
+      document.getElementById('loginScreen').classList.add('active');
+      document.getElementById('usernameInput').value = '';
+      document.getElementById('passwordInput').value = '';
+      document.getElementById('loginError').textContent = '';
+    }
+
+    function viewRanklist() {
+      const ranklistBody = document.getElementById('ranklistBody');
+      ranklistBody.innerHTML = '';
+      
+      const sorted = Object.entries(userStats)
+        .map(([username, stats]) => ({
+          username,
+          wins: stats.wins || 0,
+          losses: stats.losses || 0,
+          winRate: stats.wins + stats.losses > 0 ? ((stats.wins / (stats.wins + stats.losses)) * 100).toFixed(1) : 0
+        }))
+        .sort((a, b) => {
+          if (b.wins !== a.wins) return b.wins - a.wins;
+          return a.losses - b.losses;
+        });
+      
+      sorted.forEach((user, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>#${index + 1}</td>
+          <td>${user.username}</td>
+          <td>${user.wins}</td>
+          <td>${user.losses}</td>
+          <td>${user.winRate}%</td>
+        `;
+        ranklistBody.appendChild(row);
+      });
+      
+      document.getElementById('menuScreen').classList.remove('active');
+      document.getElementById('ranklistScreen').classList.add('active');
+    }
+
+    // Initialize app - check if user is logged in
+    if (!currentUser) {
+      document.getElementById('menuScreen').classList.remove('active');
+      document.getElementById('loginScreen').classList.add('active');
+    }
   </script>
 </body>
+
 </html>

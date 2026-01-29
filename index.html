@@ -201,6 +201,7 @@
         <p id="p1ControlText"><strong>Player 1:</strong> W / S keys</p>
         <p id="p2Text"><strong>Player 2:</strong> ↑ / ↓ keys</p>
       </div>
+      <button class="btn" onclick="unstuckBall()" style="background-color: #ff9500;">UNSTUCK BALL</button>
       <button class="btn" onclick="pauseGame()">PAUSE</button>
       <button class="btn" onclick="goToMenu()">MENU</button>
     </div>
@@ -628,6 +629,13 @@
       isPaused = !isPaused;
       const btn = event.target;
       btn.textContent = isPaused ? 'RESUME' : 'PAUSE';
+    }
+
+    function unstuckBall() {
+      ball.x = canvas.width / 2;
+      ball.y = canvas.height / 2;
+      ball.speedX = 3;
+      ball.speedY = 3;
     }
 
     // Owner Button Logic

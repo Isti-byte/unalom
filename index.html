@@ -632,10 +632,14 @@
     }
 
     function unstuckBall() {
+      // Reset ball to center with random direction
       ball.x = canvas.width / 2;
       ball.y = canvas.height / 2;
-      ball.speedX = 3;
-      ball.speedY = 3;
+      
+      // Random direction: either left or right
+      const direction = Math.random() > 0.5 ? 1 : -1;
+      ball.speedX = 4 * direction;
+      ball.speedY = (Math.random() * 4 - 2); // Random vertical speed between -2 and 2
     }
 
     // Owner Button Logic

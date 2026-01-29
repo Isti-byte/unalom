@@ -175,6 +175,29 @@ body {
   background-color: rgba(205, 127, 50, 0.05);
 }
 
+/* Result Screen */
+.result-container {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 40px 30px;
+  max-width: 500px;
+  margin: 0 auto 30px;
+}
+
+.result-message {
+  font-size: 24px;
+  color: #ffaa00;
+  margin-bottom: 15px;
+  text-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+}
+
+.result-stats {
+  font-size: 16px;
+  color: #fff;
+  margin: 0;
+}
+
 /* Game Screen */
 #gameScreen {
   flex-direction: column;
@@ -436,6 +459,19 @@ canvas {
   .ranklist-table th,
   .ranklist-table td {
     padding: 8px;
+  }
+
+  .result-container {
+    max-width: 90%;
+    padding: 30px 20px;
+  }
+
+  .result-message {
+    font-size: 20px;
+  }
+
+  .result-stats {
+    font-size: 14px;
   }
 
   #gameScreen {

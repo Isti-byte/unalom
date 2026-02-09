@@ -44,6 +44,8 @@
         <button class="btn" onclick="startGame(1)">1 PLAYER</button>
         <button class="btn" onclick="startGame(2)">2 PLAYERS</button>
         <button class="btn" onclick="viewRanklist()">RANKLIST</button>
+        <button class="btn" onclick="viewProfile()" style="background-color: #4a9eff;">MY PROFILE</button>
+        <button class="btn" onclick="enterCustomization()" style="background-color: #aa00ff;">⚙️ CUSTOMIZE</button>
         <button class="btn" onclick="logoutUser()" style="background-color: #ff6b6b;">LOGOUT</button>
         <button class="btn" onclick="enterTestMode()" id="ownerBtn" style="display: none; background-color: #ffaa00;">👑
           OWNER MODE</button>
@@ -76,6 +78,20 @@
     </div>
   </div>
 
+  <!-- Game Mode Selection Screen -->
+  <div id="gameModeScreen" class="screen">
+    <div class="menu-container">
+      <h1>SELECT GAME MODE</h1>
+      <div class="menu-buttons">
+        <button class="btn" onclick="selectGameMode('classic')">CLASSIC</button>
+        <button class="btn" onclick="selectGameMode('timeattack')">TIME ATTACK (2 MIN)</button>
+        <button class="btn" onclick="selectGameMode('survival')">SURVIVAL MODE</button>
+        <button class="btn" onclick="selectGameMode('powerups')">POWER-UPS MODE</button>
+        <button class="btn" onclick="goToMenu()">BACK</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Difficulty Selection Screen -->
   <div id="difficultyScreen" class="screen">
     <div class="menu-container">
@@ -84,6 +100,80 @@
         <button class="btn" onclick="startGameWithDifficulty('easy')">EASY</button>
         <button class="btn" onclick="startGameWithDifficulty('medium')">MEDIUM</button>
         <button class="btn" onclick="startGameWithDifficulty('hard')">HARD</button>
+        <button class="btn" onclick="goToMenu()">BACK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customization Screen -->
+  <div id="customizationScreen" class="screen">
+    <div class="menu-container">
+      <h1>CUSTOMIZE</h1>
+      <div class="customization-container">
+        <div class="custom-section">
+          <h3>Game Theme</h3>
+          <div class="custom-buttons">
+            <button class="custom-btn" onclick="setTheme('dark')" id="themeBtn-dark">🌑 DARK</button>
+            <button class="custom-btn" onclick="setTheme('neon')" id="themeBtn-neon">⚡ NEON</button>
+            <button class="custom-btn" onclick="setTheme('retro')" id="themeBtn-retro">🕹️ RETRO</button>
+          </div>
+        </div>
+
+        <div class="custom-section">
+          <h3>Paddle Color</h3>
+          <div class="custom-buttons">
+            <button class="custom-btn" onclick="setPaddleColor('#ffffff')" style="background-color: #ffffff; color: #000;">WHITE</button>
+            <button class="custom-btn" onclick="setPaddleColor('#00ff00')" style="background-color: #00ff00; color: #000;">GREEN</button>
+            <button class="custom-btn" onclick="setPaddleColor('#ff0080')" style="background-color: #ff0080;">PINK</button>
+            <button class="custom-btn" onclick="setPaddleColor('#00ccff')" style="background-color: #00ccff; color: #000;">CYAN</button>
+          </div>
+        </div>
+
+        <div class="custom-section">
+          <h3>Ball Style</h3>
+          <div class="custom-buttons">
+            <button class="custom-btn" onclick="setBallStyle('default')">●CIRCLE</button>
+            <button class="custom-btn" onclick="setBallStyle('glow')">✨GLOW</button>
+            <button class="custom-btn" onclick="setBallStyle('trail')">➤ TRAIL</button>
+            <button class="custom-btn" onclick="setBallStyle('square')">■SQUARE</button>
+          </div>
+        </div>
+
+        <div class="custom-section">
+          <h3>Sound Effects</h3>
+          <div class="custom-buttons">
+            <button class="custom-btn" id="soundBtn" onclick="toggleSound()">🔊 SOUND ON</button>
+          </div>
+        </div>
+      </div>
+      <div class="menu-buttons">
+        <button class="btn" onclick="goToMenu()">BACK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Player Profile Screen -->
+  <div id="profileScreen" class="screen">
+    <div class="menu-container">
+      <h1>PLAYER PROFILE</h1>
+      <div class="profile-container">
+        <div class="profile-info">
+          <h2 id="profileUsername">Player Name</h2>
+          <div class="profile-stats">
+            <p><strong>Total Wins:</strong> <span id="profileWins">0</span></p>
+            <p><strong>Total Losses:</strong> <span id="profileLosses">0</span></p>
+            <p><strong>Win Rate:</strong> <span id="profileWinRate">0</span>%</p>
+            <p><strong>Games Played:</strong> <span id="profileGames">0</span></p>
+            <p><strong>Best Score:</strong> <span id="profileBest">0</span></p>
+          </div>
+        </div>
+        <div class="match-history">
+          <h3>Recent Matches</h3>
+          <div id="matchHistoryList" class="history-list">
+          </div>
+        </div>
+      </div>
+      <div class="menu-buttons">
         <button class="btn" onclick="goToMenu()">BACK</button>
       </div>
     </div>
@@ -176,9 +266,13 @@
       <div class="player-info left">
         <h3>Player 1</h3>
         <p class="score" id="score1">0</p>
+        <p id="p1Streak" style="font-size: 12px; color: #ffaa00;">Streak: 0</p>
       </div>
       <div class="canvas-container">
         <canvas id="gameCanvas" width="800" height="400"></canvas>
+        <div id="gameTimerDisplay" style="position: absolute; top: 10px; right: 10px; font-size: 24px; color: #fff; display: none;">
+          <strong id="gameTimer">120s</strong>
+        </div>
         <!-- Mobile touch controls -->
         <div class="mobile-controls" id="mobileControls" style="display:none;">
           <div class="touch-zone left-zone" id="leftUp" ontouchstart="handleMobileControl('p1Up', true)"
@@ -194,6 +288,7 @@
       <div class="player-info right">
         <h3>Player 2</h3>
         <p class="score" id="score2">0</p>
+        <p id="p2Streak" style="font-size: 12px; color: #ffaa00;">Streak: 0</p>
       </div>
     </div>
     <div class="game-controls">

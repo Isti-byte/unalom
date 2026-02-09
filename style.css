@@ -566,3 +566,139 @@ canvas {
     font-size: 11px;
   }
 }
+
+/* Customization Screen */
+.customization-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  max-width: 600px;
+  width: 100%;
+  padding: 0 20px;
+}
+
+.custom-section {
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.custom-section h3 {
+  margin-bottom: 15px;
+  font-size: 18px;
+  color: #00ff00;
+  text-shadow: 0 0 10px #00ff00;
+}
+
+.custom-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.custom-btn {
+  padding: 10px 20px;
+  background-color: rgba(170, 0, 255, 0.3);
+  color: #fff;
+  border: 2px solid #aa00ff;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  min-width: 120px;
+}
+
+.custom-btn:hover {
+  background-color: rgba(170, 0, 255, 0.6);
+  transform: scale(1.05);
+  box-shadow: 0 0 15px #aa00ff;
+}
+
+/* Profile Screen */
+.profile-container {
+  display: flex;
+  gap: 40px;
+  max-width: 900px;
+  width: 100%;
+  padding: 20px;
+}
+
+.profile-info {
+  flex: 1;
+  background-color: rgba(74, 158, 255, 0.1);
+  padding: 30px;
+  border-radius: 10px;
+  border: 2px solid #4a9eff;
+}
+
+.profile-info h2 {
+  font-size: 32px;
+  margin-bottom: 20px;
+  color: #4a9eff;
+}
+
+.profile-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.profile-stats p {
+  font-size: 16px;
+  background-color: rgba(255, 255, 255, 0.05);
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.profile-stats strong {
+  color: #00ff00;
+}
+
+.match-history {
+  flex: 1;
+  background-color: rgba(255, 100, 0, 0.1);
+  padding: 30px;
+  border-radius: 10px;
+  border: 2px solid #ff6400;
+  display: flex;
+  flex-direction: column;
+}
+
+.match-history h3 {
+  margin-bottom: 20px;
+  font-size: 20px;
+  color: #ff6400;
+}
+
+.history-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-item {
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 5px;
+  border-left: 3px solid #ff6400;
+}
+
+@media (max-width: 768px) {
+  .profile-container {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .customization-container {
+    gap: 20px;
+  }
+
+  .custom-btn {
+    min-width: 100px;
+    padding: 8px 15px;
+  }
+}

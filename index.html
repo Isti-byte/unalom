@@ -309,18 +309,50 @@
     // Game Variables
     let gameMode = 2; // 1 or 2 players
     let difficulty = 'medium'; // easy, medium, hard
+    let gameType = 'classic'; // classic, timeattack, survival, powerups
     let isPaused = false;
     let gameRunning = true;
     let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     let lastGameMode = null;
     let lastDifficulty = null;
+    let lastGameType = null;
     const WINNING_SCORE = 20;
+    
+    // Customization
+    let currentTheme = 'dark';
+    let paddleColor = '#ffffff';
+    let ballStyle = 'default';
+    let soundEnabled = true;
+    let progressiveDifficulty = true;
+    let ballRallies = 0;
+    
+    // Time Attack Mode
+    let timeAttackSeconds = 120;
+    let timeAttackInterval = null;
+    
+    // Survival Mode
+    let survivalLives = 3;
+    
+    // Power-ups
+    let powerUps = [];
+    let activePowerUps = {
+      player1: { speedBoost: 0, paddleSize: 0, slowMo: 0 },
+      player2: { speedBoost: 0, paddleSize: 0, slowMo: 0 }
+    };
+    
+    // Ball Trail
+    let ballTrail = [];
+    
+    // Streak tracking
+    let currentStreak = { player1: 0, player2: 0 };
     
     // User Authentication
     const OWNER_USERNAME = 'hajdui';
     let currentUser = null;
     let users = JSON.parse(localStorage.getItem('pongUsers')) || {};
     let userStats = JSON.parse(localStorage.getItem('pongStats')) || {};
+    let matchHistory = JSON.parse(localStorage.getItem('pongHistory')) || {};
+    let userSettings = JSON.parse(localStorage.getItem('pongSettings')) || {};
 
     // Test mode variables
     let testModeActive = false;
@@ -335,6 +367,94 @@
       p2Down: false
     };
 
+    // Load user settings
+    function loadUserSettings() {
+      if (!currentUser) return;
+      if (!userSettings[currentUser]) {
+        userSettings[currentUser] = {
+          theme: 'dark',
+          paddleColor: '#ffffff',
+          ballStyle: 'default',
+          soundEnabled: true
+        };
+      }
+      const settings = userSettings[currentUser];
+      currentTheme = settings.theme || 'dark';
+      paddleColor = settings.paddleColor || '#ffffff';
+      ballStyle = settings.ballStyle || 'default';
+      soundEnabled = settings.soundEnabled !== false;
+      applyTheme(currentTheme);
+    }
+
+    function saveUserSettings() {
+      if (!currentUser) return;
+      userSettings[currentUser] = {
+        theme: currentTheme,
+        paddleColor: paddleColor,
+        ballStyle: ballStyle,
+        soundEnabled: soundEnabled
+      };
+      localStorage.setItem('pongSettings', JSON.stringify(userSettings));
+    }
+
+    // Power-up Class
+    class PowerUp {
+      constructor(x, y, type) {
+        this.x = x;
+        this.y = y;
+        this.radius = 8;
+        this.type = type; // 'speedBoost', 'paddleSize', 'slowMo'
+        this.collected = false;
+      }
+
+      draw() {
+        ctx.fillStyle = this.type === 'speedBoost' ? '#ff6b00' : this.type === 'paddleSize' ? '#00ff00' : '#0099ff';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      checkCollision(paddle) {
+        let dx = this.x - (paddle.x + paddle.width / 2);
+        let dy = this.y - (paddle.y + paddle.height / 2);
+        let distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < this.radius + 15;
+      }
+    }
+
+    // Particle Class for effects
+    class Particle {
+      constructor(x, y, vx, vy, color) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.color = color;
+        this.life = 1;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += 0.1; // gravity
+        this.life -= 0.02;
+      }
+
+      draw() {
+        ctx.globalAlpha = this.life;
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    let particles = [];
+
     // Paddle Class
     class Paddle {
       constructor(x, y) {
@@ -345,6 +465,8 @@
         this.speed = 4;
         this.dy = 0;
         this.score = 0;
+        this.baseHeight = 60;
+        this.baseSpeed = 4;
       }
 
       update() {
@@ -354,8 +476,18 @@
       }
 
       draw() {
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = paddleColor;
         ctx.fillRect(this.x, this.y, this.width, this.height);
+        
+        // Draw glow for neon theme
+        if (currentTheme === 'neon') {
+          ctx.shadowColor = paddleColor;
+          ctx.shadowBlur = 15;
+          ctx.strokeStyle = paddleColor;
+          ctx.lineWidth = 2;
+          ctx.strokeRect(this.x, this.y, this.width, this.height);
+          ctx.shadowBlur = 0;
+        }
       }
 
       reset() {
@@ -372,15 +504,30 @@
         this.radius = 5;
         this.speedX = 3;
         this.speedY = 3;
+        this.baseSpeedX = 3;
+        this.baseSpeedY = 3;
       }
 
       update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
+        // Apply slow-mo if active
+        let speedMultiplier = 1;
+        if (activePowerUps.player1.slowMo > 0 || activePowerUps.player2.slowMo > 0) {
+          speedMultiplier = 0.5;
+        }
+
+        this.x += this.speedX * speedMultiplier;
+        this.y += this.speedY * speedMultiplier;
+
+        // Record trail
+        if (ballStyle === 'trail') {
+          ballTrail.push({ x: this.x, y: this.y });
+          if (ballTrail.length > 15) ballTrail.shift();
+        }
 
         // Bounce off top and bottom
         if (this.y - this.radius < 0 || this.y + this.radius > canvas.height) {
           this.speedY = -this.speedY;
+          playSound('bounce');
         }
 
         // Bounce off paddles
@@ -390,17 +537,24 @@
         // Score points
         if (this.x - this.radius < 0) {
           player2.score++;
+          currentStreak.player2++;
+          currentStreak.player1 = 0;
+          playSound('score');
           this.reset();
+          ballRallies = 0;
         } else if (this.x + this.radius > canvas.width) {
           player1.score++;
+          currentStreak.player1++;
+          currentStreak.player2 = 0;
+          playSound('score');
           this.reset();
+          ballRallies = 0;
         }
 
         updateScores();
       }
 
       checkPaddleCollision(paddle) {
-        // Check if ball is within paddle's x range
         let ballLeft = this.x - this.radius;
         let ballRight = this.x + this.radius;
         let ballTop = this.y - this.radius;
@@ -411,32 +565,28 @@
         let paddleTop = paddle.y;
         let paddleBottom = paddle.y + paddle.height;
 
-        // Check for collision
         if (ballLeft < paddleRight && ballRight > paddleLeft &&
           ballTop < paddleBottom && ballBottom > paddleTop) {
 
-          // Determine which side of paddle was hit
           let overlapLeft = ballRight - paddleLeft;
           let overlapRight = paddleRight - ballLeft;
           let overlapTop = ballBottom - paddleTop;
           let overlapBottom = paddleBottom - ballTop;
 
-          // Find minimum overlap
           let minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
 
           if (minOverlap === overlapLeft || minOverlap === overlapRight) {
-            // Hit from left or right side
             this.speedX = -this.speedX;
             this.speedY += paddle.dy * 0.15;
+            ballRallies++;
 
-            // Push ball out of paddle
             if (paddle === player1) {
               this.x = paddleRight + this.radius;
             } else {
               this.x = paddleLeft - this.radius;
             }
+            playSound('paddle');
           } else {
-            // Hit from top or bottom
             this.speedY = -this.speedY;
             this.speedX += paddle.dy * 0.15;
 
@@ -450,17 +600,31 @@
       }
 
       draw() {
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fill();
+        if (ballStyle === 'glow') {
+          ctx.fillStyle = '#ffff00';
+          ctx.shadowColor = '#ffff00';
+          ctx.shadowBlur = 15;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        } else if (ballStyle === 'square') {
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+        } else {
+          ctx.fillStyle = '#fff';
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
 
       reset() {
         this.x = canvas.width / 2;
         this.y = canvas.height / 2;
-        this.speedX = 3;
-        this.speedY = 3;
+        this.speedX = (Math.random() > 0.5 ? 1 : -1) * 3;
+        this.speedY = (Math.random() * 4 - 2);
+        ballTrail = [];
       }
     }
 
@@ -474,7 +638,6 @@
     document.addEventListener('keydown', (e) => {
       keys[e.key.toLowerCase()] = true;
 
-      // Test mode access (Ctrl+Shift+T)
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 't') {
         enterTestMode();
         return;
@@ -513,16 +676,15 @@
       let speed = paddle.speed;
       let threshold = 35;
 
-      // Adjust AI difficulty - faster and more responsive as difficulty increases
       if (difficulty === 'easy') {
-        speed = 2; // Slowest
-        threshold = 60; // Least responsive
+        speed = 2;
+        threshold = 60;
       } else if (difficulty === 'medium') {
-        speed = 5; // Medium
+        speed = 5;
         threshold = 35;
       } else if (difficulty === 'hard') {
-        speed = 8; // Much faster
-        threshold = 15; // Most responsive
+        speed = 8;
+        threshold = 15;
       }
 
       if (dy < -threshold) {
@@ -534,34 +696,194 @@
       }
     }
 
+    // Power-up functions
+    function spawnPowerUp() {
+      if (gameType !== 'powerups' || Math.random() > 0.02) return; // 2% chance per frame
+      
+      const types = ['speedBoost', 'paddleSize', 'slowMo'];
+      const randomType = types[Math.floor(Math.random() * types.length)];
+      const x = Math.random() * (canvas.width - 40) + 20;
+      const y = Math.random() * (canvas.height - 40) + 20;
+      
+      powerUps.push(new PowerUp(x, y, randomType));
+    }
+
+    function updatePowerUps() {
+      for (let i = powerUps.length - 1; i >= 0; i--) {
+        const pu = powerUps[i];
+        pu.draw();
+
+        if (pu.checkCollision(player1)) {
+          applyPowerUp('player1', pu.type);
+          powerUps.splice(i, 1);
+        } else if (pu.checkCollision(player2)) {
+          applyPowerUp('player2', pu.type);
+          powerUps.splice(i, 1);
+        }
+      }
+    }
+
+    function applyPowerUp(player, type) {
+      playSound('powerup');
+      if (type === 'speedBoost') {
+        activePowerUps[player].speedBoost = 300; // frames
+        const paddle = player === 'player1' ? player1 : player2;
+        paddle.speed = paddle.baseSpeed * 1.5;
+      } else if (type === 'paddleSize') {
+        activePowerUps[player].paddleSize = 300;
+        const paddle = player === 'player1' ? player1 : player2;
+        paddle.height = paddle.baseHeight * 1.5;
+      } else if (type === 'slowMo') {
+        activePowerUps[player].slowMo = 150;
+      }
+    }
+
+    function updateActivePowerUps() {
+      for (let player of ['player1', 'player2']) {
+        const paddle = player === 'player1' ? player1 : player2;
+        
+        if (activePowerUps[player].speedBoost > 0) {
+          activePowerUps[player].speedBoost--;
+        } else {
+          paddle.speed = paddle.baseSpeed;
+        }
+
+        if (activePowerUps[player].paddleSize > 0) {
+          activePowerUps[player].paddleSize--;
+        } else {
+          paddle.height = paddle.baseHeight;
+        }
+
+        if (activePowerUps[player].slowMo > 0) {
+          activePowerUps[player].slowMo--;
+        }
+      }
+    }
+
+    // Theme system
+    function applyTheme(theme) {
+      currentTheme = theme;
+      const gameScreen = document.getElementById('gameCanvas').parentElement;
+      
+      if (theme === 'neon') {
+        gameScreen.style.backgroundColor = '#0a0a0a';
+        ctx.fillStyle = '#0a0a0a';
+      } else if (theme === 'retro') {
+        gameScreen.style.backgroundColor = '#00aa00';
+        ctx.fillStyle = '#001100';
+      } else {
+        gameScreen.style.backgroundColor = '#000';
+        ctx.fillStyle = '#000';
+      }
+      
+      saveUserSettings();
+    }
+
+    function setTheme(theme) {
+      applyTheme(theme);
+      updateThemeButtons();
+    }
+
+    function updateThemeButtons() {
+      document.getElementById('themeBtn-dark').style.opacity = currentTheme === 'dark' ? '1' : '0.5';
+      document.getElementById('themeBtn-neon').style.opacity = currentTheme === 'neon' ? '1' : '0.5';
+      document.getElementById('themeBtn-retro').style.opacity = currentTheme === 'retro' ? '1' : '0.5';
+    }
+
+    function setPaddleColor(color) {
+      paddleColor = color;
+      saveUserSettings();
+    }
+
+    function setBallStyle(style) {
+      ballStyle = style;
+      saveUserSettings();
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const btn = document.getElementById('soundBtn');
+      btn.textContent = soundEnabled ? '🔊 SOUND ON' : '🔇 SOUND OFF';
+      saveUserSettings();
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      // Use Web Audio API for simple beeps
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        if (type === 'bounce' || type === 'paddle') {
+          oscillator.frequency.value = 600;
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.1);
+        } else if (type === 'score') {
+          oscillator.frequency.value = 800;
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.2);
+        } else if (type === 'powerup') {
+          oscillator.frequency.value = 1000;
+          gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.15);
+        }
+      } catch (e) {
+        // Audio not available
+      }
+    }
+
     // Draw center line
     function drawLine() {
-      ctx.strokeStyle = '#fff';
+      ctx.strokeStyle = currentTheme === 'retro' ? '#00ff00' : '#fff';
+      if (currentTheme === 'neon') {
+        ctx.shadowColor = '#00ff00';
+        ctx.shadowBlur = 10;
+      }
       ctx.setLineDash([5, 5]);
       ctx.beginPath();
       ctx.moveTo(canvas.width / 2, 0);
       ctx.lineTo(canvas.width / 2, canvas.height);
       ctx.stroke();
       ctx.setLineDash([]);
+      ctx.shadowBlur = 0;
     }
 
     // Update scores
     function updateScores() {
       document.getElementById('score1').textContent = player1.score;
       document.getElementById('score2').textContent = player2.score;
+      document.getElementById('p1Streak').textContent = `Streak: ${currentStreak.player1}`;
+      document.getElementById('p2Streak').textContent = `Streak: ${currentStreak.player2}`;
 
-      // Check for winner (20 points)
-      if (player1.score >= WINNING_SCORE) {
-        endGame('Player 1');
-      } else if (player2.score >= WINNING_SCORE) {
-        endGame('Player 2');
+      if (gameType === 'classic' || gameType === 'powerups') {
+        if (player1.score >= WINNING_SCORE) {
+          endGame('Player 1');
+        } else if (player2.score >= WINNING_SCORE) {
+          endGame('Player 2');
+        }
+      }
+
+      // Progressive difficulty
+      if (progressiveDifficulty && (gameType === 'classic' || gameType === 'powerups')) {
+        let speedIncrease = ballRallies * 0.1;
+        ball.speedX = ball.baseSpeedX * (ball.speedX > 0 ? 1 : -1) * (1 + speedIncrease);
+        ball.speedY = ball.baseSpeedY * (ball.speedY > 0 ? 1 : -1) * (1 + speedIncrease);
       }
     }
 
     // Game loop
     function gameLoop() {
       if (!isPaused && gameRunning) {
-        // Update
         player1.update();
         if (gameMode === 2) {
           player2.update();
@@ -570,7 +892,6 @@
           player2.update();
         }
 
-        // Apply test mode ball speed if active
         if (testMode_playing) {
           ball.speedX = testMode_ballSpeed * (ball.speedX > 0 ? 1 : -1);
           ball.speedY = testMode_ballSpeed * (ball.speedY > 0 ? 1 : -1);
@@ -578,15 +899,53 @@
 
         ball.update();
 
+        if (gameType === 'powerups') {
+          spawnPowerUp();
+          updatePowerUps();
+          updateActivePowerUps();
+        }
+
+        updateParticles();
+
         // Draw
-        ctx.fillStyle = '#000';
+        if (currentTheme === 'retro') {
+          ctx.fillStyle = '#001100';
+        } else if (currentTheme === 'neon') {
+          ctx.fillStyle = '#0a0a0a';
+        } else {
+          ctx.fillStyle = '#000';
+        }
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        if (ballStyle === 'trail') {
+          for (let i = 0; i < ballTrail.length; i++) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${i / ballTrail.length * 0.5})`;
+            ctx.beginPath();
+            ctx.arc(ballTrail[i].x, ballTrail[i].y, ball.radius, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
         drawLine();
         player1.draw();
         player2.draw();
         ball.draw();
+
+        // Draw particles
+        for (let p of particles) {
+          p.draw();
+        }
       }
       requestAnimationFrame(gameLoop);
+    }
+
+    function updateParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        if (particles[i].life <= 0) {
+          particles.splice(i, 1);
+        }
+      }
     }
 
     // End game and update stats
@@ -599,7 +958,6 @@
       let resultStats = document.getElementById('resultStats');
 
       if (gameMode === 1) {
-        // Single player game
         if (winner1) {
           resultTitle.textContent = '🎉 YOU WIN! 🎉';
           resultMessage.textContent = `You defeated the AI!`;
@@ -610,7 +968,7 @@
         
         if (currentUser) {
           if (!userStats[currentUser]) {
-            userStats[currentUser] = { wins: 0, losses: 0 };
+            userStats[currentUser] = { wins: 0, losses: 0, bestScore: 0 };
           }
           if (winner1) {
             userStats[currentUser].wins++;
@@ -619,10 +977,23 @@
             userStats[currentUser].losses++;
             resultStats.textContent = `Total Losses: ${userStats[currentUser].losses}`;
           }
+          const bestScore = Math.max(player1.score, player2.score);
+          if (!userStats[currentUser].bestScore || bestScore > userStats[currentUser].bestScore) {
+            userStats[currentUser].bestScore = bestScore;
+          }
           localStorage.setItem('pongStats', JSON.stringify(userStats));
+          
+          // Save match history
+          if (!matchHistory[currentUser]) matchHistory[currentUser] = [];
+          matchHistory[currentUser].push({
+            date: new Date().toLocaleString(),
+            gameType: gameType,
+            result: winner1 ? 'Win' : 'Loss',
+            score: `${player1.score}-${player2.score}`
+          });
+          localStorage.setItem('pongHistory', JSON.stringify(matchHistory));
         }
       } else {
-        // Two player game
         if (winner1) {
           resultTitle.textContent = '🎉 PLAYER 1 WINS! 🎉';
           resultMessage.textContent = `Final Score: ${player1.score} - ${player2.score}`;
@@ -641,20 +1012,79 @@
     function playAgain() {
       if (lastGameMode === 1) {
         startGameWithDifficulty(lastDifficulty);
+      } else if (lastGameType === 'timeattack' || lastGameType === 'survival' || lastGameType === 'powerups') {
+        startGameWithType(lastGameType, lastGameMode);
       } else {
         startGame(2);
       }
       document.getElementById('resultScreen').classList.remove('active');
     }
 
+    // Game type selection
+    function selectGameMode(mode) {
+      gameType = mode;
+      lastGameType = mode;
+      
+      if (mode === 'timeattack' || mode === 'survival' || mode === 'powerups') {
+        startGameWithType(mode, 2);
+      } else {
+        document.getElementById('gameModeScreen').classList.remove('active');
+        document.getElementById('difficultyScreen').classList.add('active');
+      }
+    }
+
+    function startGameWithType(type, players) {
+      gameType = type;
+      gameMode = players;
+      lastGameMode = players;
+      lastGameType = type;
+      gameRunning = true;
+      isPaused = false;
+      player1.score = 0;
+      player2.score = 0;
+      player1.reset();
+      player2.reset();
+      ball.reset();
+      powerUps = [];
+      ballRallies = 0;
+      currentStreak = { player1: 0, player2: 0 };
+
+      document.getElementById('gameModeScreen').classList.remove('active');
+      document.getElementById('difficultyScreen').classList.remove('active');
+      document.getElementById('resultScreen').classList.remove('active');
+      document.getElementById('gameScreen').classList.add('active');
+
+      if (type === 'timeattack') {
+        timeAttackSeconds = 120;
+        document.getElementById('gameTimerDisplay').style.display = 'block';
+        
+        clearInterval(timeAttackInterval);
+        timeAttackInterval = setInterval(() => {
+          timeAttackSeconds--;
+          document.getElementById('gameTimer').textContent = timeAttackSeconds + 's';
+          
+          if (timeAttackSeconds <= 0) {
+            clearInterval(timeAttackInterval);
+            let winner = player1.score > player2.score ? 'Player 1' : 'Player 2';
+            endGame(winner);
+          }
+        }, 1000);
+      } else {
+        document.getElementById('gameTimerDisplay').style.display = 'none';
+        clearInterval(timeAttackInterval);
+      }
+
+      updateScores();
+    }
+
     // Menu functions
     function startGame(players) {
       if (players === 1) {
-        // Show difficulty selection for single player
         document.getElementById('menuScreen').classList.remove('active');
-        document.getElementById('difficultyScreen').classList.add('active');
+        document.getElementById('gameModeScreen').classList.add('active');
       } else {
-        // Start 2 player game directly
+        gameType = 'classic';
+        lastGameType = 'classic';
         gameMode = 2;
         lastGameMode = 2;
         gameRunning = true;
@@ -664,6 +1094,8 @@
         player1.reset();
         player2.reset();
         ball.reset();
+        ballRallies = 0;
+        currentStreak = { player1: 0, player2: 0 };
 
         const p2Text = document.getElementById('p2Text');
         const p1ControlText = document.getElementById('p1ControlText');
@@ -684,6 +1116,7 @@
         document.getElementById('menuScreen').classList.remove('active');
         document.getElementById('resultScreen').classList.remove('active');
         document.getElementById('gameScreen').classList.add('active');
+        document.getElementById('gameTimerDisplay').style.display = 'none';
         updateScores();
       }
     }
@@ -691,6 +1124,8 @@
     function startGameWithDifficulty(diff) {
       difficulty = diff;
       lastDifficulty = diff;
+      gameType = 'classic';
+      lastGameType = 'classic';
       gameMode = 1;
       lastGameMode = 1;
       gameRunning = true;
@@ -700,6 +1135,8 @@
       player1.reset();
       player2.reset();
       ball.reset();
+      ballRallies = 0;
+      currentStreak = { player1: 0, player2: 0 };
 
       const p2Text = document.getElementById('p2Text');
       const p1ControlText = document.getElementById('p1ControlText');
@@ -714,9 +1151,11 @@
         mobileControls.style.display = 'none';
       }
 
+      document.getElementById('gameModeScreen').classList.remove('active');
       document.getElementById('difficultyScreen').classList.remove('active');
       document.getElementById('resultScreen').classList.remove('active');
       document.getElementById('gameScreen').classList.add('active');
+      document.getElementById('gameTimerDisplay').style.display = 'none';
       updateScores();
     }
 
@@ -727,30 +1166,81 @@
     }
 
     function unstuckBall() {
-      // Reset ball to center with random direction
       ball.x = canvas.width / 2;
       ball.y = canvas.height / 2;
       
-      // Random direction: either left or right
       const direction = Math.random() > 0.5 ? 1 : -1;
       ball.speedX = 4 * direction;
-      ball.speedY = (Math.random() * 4 - 2); // Random vertical speed between -2 and 2
+      ball.speedY = (Math.random() * 4 - 2);
+    }
+
+    // Customization functions
+    function enterCustomization() {
+      document.getElementById('menuScreen').classList.remove('active');
+      document.getElementById('customizationScreen').classList.add('active');
+      updateThemeButtons();
+      updateSoundButton();
+    }
+
+    function updateSoundButton() {
+      const btn = document.getElementById('soundBtn');
+      btn.textContent = soundEnabled ? '🔊 SOUND ON' : '🔇 SOUND OFF';
+    }
+
+    // Profile functions
+    function viewProfile() {
+      if (!currentUser) return;
+      
+      const stats = userStats[currentUser] || { wins: 0, losses: 0, bestScore: 0 };
+      const games = (stats.wins || 0) + (stats.losses || 0);
+      const winRate = games > 0 ? ((stats.wins / games) * 100).toFixed(1) : 0;
+
+      document.getElementById('profileUsername').textContent = currentUser;
+      document.getElementById('profileWins').textContent = stats.wins || 0;
+      document.getElementById('profileLosses').textContent = stats.losses || 0;
+      document.getElementById('profileWinRate').textContent = winRate;
+      document.getElementById('profileGames').textContent = games;
+      document.getElementById('profileBest').textContent = stats.bestScore || 0;
+
+      const historyList = document.getElementById('matchHistoryList');
+      historyList.innerHTML = '';
+      
+      const history = matchHistory[currentUser] || [];
+      const recentMatches = history.slice(-10).reverse();
+      
+      if (recentMatches.length === 0) {
+        historyList.innerHTML = '<p style="text-align: center; color: #999;">No matches yet</p>';
+      } else {
+        recentMatches.forEach(match => {
+          const item = document.createElement('div');
+          item.className = 'history-item';
+          item.style.padding = '10px';
+          item.style.margin = '5px 0';
+          item.style.backgroundColor = match.result === 'Win' ? 'rgba(0, 255, 0, 0.1)' : 'rgba(255, 0, 0, 0.1)';
+          item.style.borderRadius = '5px';
+          item.style.fontSize = '14px';
+          item.innerHTML = `
+            <strong>${match.result}</strong> | ${match.gameType} | Score: ${match.score}<br>
+            <span style="color: #999; font-size: 12px;">${match.date}</span>
+          `;
+          historyList.appendChild(item);
+        });
+      }
+
+      document.getElementById('menuScreen').classList.remove('active');
+      document.getElementById('profileScreen').classList.add('active');
     }
 
     // Owner Button Logic
     function titleClicked() {
       titleClickCount++;
-
-      // Reset timer on new click
       clearTimeout(titleClickTimer);
 
       if (titleClickCount === 7) {
-        // Reveal owner button
         document.getElementById('ownerBtn').style.display = 'block';
         titleClickCount = 0;
       }
 
-      // Reset count after 2 seconds of no clicks
       titleClickTimer = setTimeout(() => {
         titleClickCount = 0;
       }, 2000);
@@ -824,6 +1314,7 @@
       gameRunning = true;
       isPaused = false;
       testMode_playing = true;
+      gameType = 'classic';
       player1.score = 0;
       player2.score = 0;
       player1.reset();
@@ -864,12 +1355,18 @@
       isPaused = false;
       testModeActive = false;
       testMode_playing = false;
+      clearInterval(timeAttackInterval);
+      
       document.getElementById('gameScreen').classList.remove('active');
+      document.getElementById('gameModeScreen').classList.remove('active');
       document.getElementById('difficultyScreen').classList.remove('active');
       document.getElementById('testScreen').classList.remove('active');
       document.getElementById('resultScreen').classList.remove('active');
+      document.getElementById('customizationScreen').classList.remove('active');
+      document.getElementById('profileScreen').classList.remove('active');
       document.getElementById('ranklistScreen').classList.remove('active');
       document.getElementById('menuScreen').classList.add('active');
+      
       const btn = document.querySelector('[onclick="pauseGame()"]');
       if (btn) btn.textContent = 'PAUSE';
     }
@@ -896,6 +1393,7 @@
       }
       
       currentUser = username;
+      loadUserSettings();
       if (username === OWNER_USERNAME) {
         document.getElementById('ownerBtn').style.display = 'block';
       }
@@ -938,9 +1436,11 @@
       }
       
       users[username] = password;
-      userStats[username] = { wins: 0, losses: 0 };
+      userStats[username] = { wins: 0, losses: 0, bestScore: 0 };
+      matchHistory[username] = [];
       localStorage.setItem('pongUsers', JSON.stringify(users));
       localStorage.setItem('pongStats', JSON.stringify(userStats));
+      localStorage.setItem('pongHistory', JSON.stringify(matchHistory));
       
       document.getElementById('regUsernameInput').value = '';
       document.getElementById('regPasswordInput').value = '';
@@ -1002,10 +1502,12 @@
       document.getElementById('ranklistScreen').classList.add('active');
     }
 
-    // Initialize app - check if user is logged in
+    // Initialize app
     if (!currentUser) {
       document.getElementById('menuScreen').classList.remove('active');
       document.getElementById('loginScreen').classList.add('active');
+    } else {
+      loadUserSettings();
     }
   </script>
 </body>

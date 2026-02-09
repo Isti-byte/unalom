@@ -1092,7 +1092,7 @@
       lastGameType = mode;
       
       if (mode === 'timeattack' || mode === 'survival' || mode === 'powerups') {
-        startGameWithType(mode, 2);
+        startGameWithType(mode, 1);
       } else {
         document.getElementById('gameModeScreen').classList.remove('active');
         document.getElementById('difficultyScreen').classList.add('active');
@@ -1119,6 +1119,21 @@
       document.getElementById('difficultyScreen').classList.remove('active');
       document.getElementById('resultScreen').classList.remove('active');
       document.getElementById('gameScreen').classList.add('active');
+
+      // Set control text based on game mode
+      const p2Text = document.getElementById('p2Text');
+      const p1ControlText = document.getElementById('p1ControlText');
+      if (players === 1) {
+        // AI mode
+        if (isMobile) {
+          p1ControlText.innerHTML = '<strong>Player 1:</strong> Touch Left Side';
+          p2Text.innerHTML = '<strong>AI:</strong> vs Computer';
+        } else {
+          p1ControlText.innerHTML = '<strong>Player 1:</strong> W / S keys';
+          p2Text.innerHTML = '<strong>AI:</strong> vs Computer';
+        }
+        p2Text.style.display = 'block';
+      }
 
       if (type === 'timeattack') {
         timeAttackSeconds = 120;

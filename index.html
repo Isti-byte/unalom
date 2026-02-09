@@ -786,24 +786,53 @@
 
     function updateThemeButtons() {
       document.getElementById('themeBtn-dark').style.opacity = currentTheme === 'dark' ? '1' : '0.5';
+      document.getElementById('themeBtn-dark').style.boxShadow = currentTheme === 'dark' ? '0 0 15px rgba(255, 255, 255, 0.5)' : 'none';
       document.getElementById('themeBtn-neon').style.opacity = currentTheme === 'neon' ? '1' : '0.5';
+      document.getElementById('themeBtn-neon').style.boxShadow = currentTheme === 'neon' ? '0 0 15px rgba(0, 255, 0, 0.8)' : 'none';
       document.getElementById('themeBtn-retro').style.opacity = currentTheme === 'retro' ? '1' : '0.5';
+      document.getElementById('themeBtn-retro').style.boxShadow = currentTheme === 'retro' ? '0 0 15px rgba(0, 170, 0, 0.8)' : 'none';
     }
 
     function setPaddleColor(color) {
       paddleColor = color;
+      // Visual feedback - highlight selected color
+      const paddleButtons = document.querySelectorAll('[onclick^="setPaddleColor"]');
+      paddleButtons.forEach(btn => {
+        btn.style.border = '2px solid transparent';
+        btn.style.boxShadow = 'none';
+      });
+      event.target.style.border = '3px solid #fff';
+      event.target.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.8)';
       saveUserSettings();
     }
 
     function setBallStyle(style) {
       ballStyle = style;
+      // Visual feedback - highlight selected style
+      const ballButtons = document.querySelectorAll('[onclick^="setBallStyle"]');
+      ballButtons.forEach(btn => {
+        btn.style.backgroundColor = 'rgba(170, 0, 255, 0.3)';
+        btn.style.boxShadow = 'none';
+      });
+      event.target.style.backgroundColor = 'rgba(170, 0, 255, 0.8)';
+      event.target.style.boxShadow = '0 0 20px rgba(170, 0, 255, 1)';
       saveUserSettings();
     }
 
     function toggleSound() {
       soundEnabled = !soundEnabled;
       const btn = document.getElementById('soundBtn');
-      btn.textContent = soundEnabled ? '🔊 SOUND ON' : '🔇 SOUND OFF';
+      if (soundEnabled) {
+        btn.textContent = '🔊 SOUND ON';
+        btn.style.backgroundColor = 'rgba(0, 255, 0, 0.3)';
+        btn.style.borderColor = '#00ff00';
+        btn.style.boxShadow = '0 0 15px rgba(0, 255, 0, 0.6)';
+      } else {
+        btn.textContent = '🔇 SOUND OFF';
+        btn.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+        btn.style.borderColor = '#ff0000';
+        btn.style.boxShadow = '0 0 15px rgba(255, 0, 0, 0.6)';
+      }
       saveUserSettings();
     }
 
@@ -1180,11 +1209,54 @@
       document.getElementById('customizationScreen').classList.add('active');
       updateThemeButtons();
       updateSoundButton();
+      updatePaddleColorButtons();
+      updateBallStyleButtons();
+    }
+
+    function updatePaddleColorButtons() {
+      const paddleButtons = document.querySelectorAll('[onclick^="setPaddleColor"]');
+      paddleButtons.forEach(btn => {
+        btn.style.border = '2px solid transparent';
+        btn.style.boxShadow = 'none';
+        const btnColor = btn.style.backgroundColor;
+        if (btnColor.includes(paddleColor.substring(1)) || 
+            (paddleColor === '#ffffff' && btnColor.includes('rgb(255, 255, 255)')) ||
+            (paddleColor === '#00ff00' && btnColor.includes('rgb(0, 255, 0)')) ||
+            (paddleColor === '#ff0080' && btnColor.includes('rgb(255, 0, 128)')) ||
+            (paddleColor === '#00ccff' && btnColor.includes('rgb(0, 204, 255)'))) {
+          btn.style.border = '3px solid #fff';
+          btn.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.8)';
+        }
+      });
+    }
+
+    function updateBallStyleButtons() {
+      const ballButtons = document.querySelectorAll('[onclick^="setBallStyle"]');
+      ballButtons.forEach(btn => {
+        const style = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
+        if (style === ballStyle) {
+          btn.style.backgroundColor = 'rgba(170, 0, 255, 0.8)';
+          btn.style.boxShadow = '0 0 20px rgba(170, 0, 255, 1)';
+        } else {
+          btn.style.backgroundColor = 'rgba(170, 0, 255, 0.3)';
+          btn.style.boxShadow = 'none';
+        }
+      });
     }
 
     function updateSoundButton() {
       const btn = document.getElementById('soundBtn');
-      btn.textContent = soundEnabled ? '🔊 SOUND ON' : '🔇 SOUND OFF';
+      if (soundEnabled) {
+        btn.textContent = '🔊 SOUND ON';
+        btn.style.backgroundColor = 'rgba(0, 255, 0, 0.3)';
+        btn.style.borderColor = '#00ff00';
+        btn.style.boxShadow = '0 0 15px rgba(0, 255, 0, 0.6)';
+      } else {
+        btn.textContent = '🔇 SOUND OFF';
+        btn.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+        btn.style.borderColor = '#ff0000';
+        btn.style.boxShadow = '0 0 15px rgba(255, 0, 0, 0.6)';
+      }
     }
 
     // Profile functions

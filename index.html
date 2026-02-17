@@ -680,18 +680,19 @@
       const paddle = player2;
       const dy = ball.y - (paddle.y + paddle.height / 2);
 
+      // Slightly increased AI responsiveness and speed
       let speed = paddle.speed;
-      let threshold = 35;
+      let threshold = 30;
 
       if (difficulty === 'easy') {
-        speed = 2;
-        threshold = 60;
+        speed = 3; // was 2
+        threshold = 50; // was 60
       } else if (difficulty === 'medium') {
-        speed = 5;
-        threshold = 35;
+        speed = 6; // was 5
+        threshold = 30; // was 35
       } else if (difficulty === 'hard') {
-        speed = 8;
-        threshold = 15;
+        speed = 10; // was 8
+        threshold = 10; // was 15
       }
 
       if (dy < -threshold) {

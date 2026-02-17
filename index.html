@@ -651,16 +651,30 @@
         return;
       }
 
-      if (keys['w']) player1.dy = -player1.speed;
-      if (keys['s']) player1.dy = player1.speed;
-      if (keys['arrowup']) player2.dy = -player2.speed;
-      if (keys['arrowdown']) player2.dy = player2.speed;
+      if (keys['w']) {
+        player1.dy = -player1.speed;
+        if (singlePlayerDualControl) player2.dy = -player2.speed;
+      }
+      if (keys['s']) {
+        player1.dy = player1.speed;
+        if (singlePlayerDualControl) player2.dy = player2.speed;
+      }
+      // Only allow arrow control when not in dual-control mode
+      if (!singlePlayerDualControl) {
+        if (keys['arrowup']) player2.dy = -player2.speed;
+        if (keys['arrowdown']) player2.dy = player2.speed;
+      }
     });
 
     document.addEventListener('keyup', (e) => {
       keys[e.key.toLowerCase()] = false;
-      if (!keys['w'] && !keys['s']) player1.dy = 0;
-      if (!keys['arrowup'] && !keys['arrowdown']) player2.dy = 0;
+      if (!keys['w'] && !keys['s']) {
+        player1.dy = 0;
+        if (singlePlayerDualControl) player2.dy = 0;
+      }
+      if (!singlePlayerDualControl) {
+        if (!keys['arrowup'] && !keys['arrowdown']) player2.dy = 0;
+      }
     });
 
     // Mobile control handler

@@ -653,14 +653,14 @@
 
       if (keys['w']) {
         player1.dy = -player1.speed;
-        if (singlePlayerDualControl) player2.dy = -player2.speed;
+        if (singlePlayerDualControl && gameMode === 1) player2.dy = -player2.speed;
       }
       if (keys['s']) {
         player1.dy = player1.speed;
-        if (singlePlayerDualControl) player2.dy = player2.speed;
+        if (singlePlayerDualControl && gameMode === 1) player2.dy = player2.speed;
       }
-      // Only allow arrow control when not in dual-control mode
-      if (!singlePlayerDualControl) {
+      // Only allow arrow control when not in dual-control mode and in 2-player mode
+      if (!singlePlayerDualControl && gameMode === 2) {
         if (keys['arrowup']) player2.dy = -player2.speed;
         if (keys['arrowdown']) player2.dy = player2.speed;
       }
@@ -670,9 +670,9 @@
       keys[e.key.toLowerCase()] = false;
       if (!keys['w'] && !keys['s']) {
         player1.dy = 0;
-        if (singlePlayerDualControl) player2.dy = 0;
+        if (singlePlayerDualControl && gameMode === 1) player2.dy = 0;
       }
-      if (!singlePlayerDualControl) {
+      if (!singlePlayerDualControl && gameMode === 2) {
         if (!keys['arrowup'] && !keys['arrowdown']) player2.dy = 0;
       }
     });
@@ -1134,6 +1134,13 @@
     function startGameWithType(type, players) {
       gameType = type;
       gameMode = players;
+      // ensure dual-control only active for single-player
+      if (players !== 1) {
+        singlePlayerDualControl = false;
+        const cb = document.getElementById('dualControlCheckbox'); if (cb) cb.checked = false;
+      } else {
+        singlePlayerDualControl = document.getElementById('dualControlCheckbox') ? document.getElementById('dualControlCheckbox').checked : false;
+      }
       lastGameMode = players;
       lastGameType = type;
       gameRunning = true;
@@ -1207,6 +1214,9 @@
         document.getElementById('menuScreen').classList.remove('active');
         document.getElementById('gameModeScreen').classList.add('active');
       } else {
+        // disable dual-control when starting a 2-player game
+        singlePlayerDualControl = false;
+        const cb = document.getElementById('dualControlCheckbox'); if (cb) cb.checked = false;
         gameType = 'classic';
         lastGameType = 'classic';
         gameMode = 2;
@@ -1494,6 +1504,13 @@
 
     function startTestGame(players) {
       gameMode = players;
+      // only allow dual-control in single-player test games
+      if (players !== 1) {
+        singlePlayerDualControl = false;
+        const cb = document.getElementById('dualControlCheckbox'); if (cb) cb.checked = false;
+      } else {
+        singlePlayerDualControl = document.getElementById('dualControlCheckbox') ? document.getElementById('dualControlCheckbox').checked : false;
+      }
       gameRunning = true;
       isPaused = false;
       testMode_playing = true;

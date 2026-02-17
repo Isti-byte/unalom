@@ -84,6 +84,7 @@
       <h1>SELECT GAME MODE</h1>
       <div class="menu-buttons">
         <button class="btn" onclick="selectGameMode('classic')">CLASSIC</button>
+        <button class="btn" onclick="selectDualControlMode('classic')">CLASSIC (YOU CONTROL BOTH)</button>
         <button class="btn" onclick="selectGameMode('timeattack')">TIME ATTACK (2 MIN)</button>
         <button class="btn" onclick="selectGameMode('survival')">SURVIVAL MODE</button>
         <button class="btn" onclick="selectGameMode('powerups')">POWER-UPS MODE</button>
@@ -1105,6 +1106,15 @@
         document.getElementById('gameModeScreen').classList.remove('active');
         document.getElementById('difficultyScreen').classList.add('active');
       }
+    }
+
+    // Start a single-player game where the human controls both paddles
+    function selectDualControlMode(mode) {
+      // ensure checkbox is checked for consistency
+      const cb = document.getElementById('dualControlCheckbox');
+      if (cb) cb.checked = true;
+      singlePlayerDualControl = true;
+      selectGameMode(mode);
     }
 
     function startGameWithType(type, players) {

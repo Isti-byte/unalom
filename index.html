@@ -97,6 +97,10 @@
     <div class="menu-container">
       <h1>SELECT DIFFICULTY</h1>
       <div class="menu-buttons">
+        <label style="margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="dualControlCheckbox">
+          <span>Control both paddles (player controls both)</span>
+        </label>
         <button class="btn" onclick="startGameWithDifficulty('easy')">EASY</button>
         <button class="btn" onclick="startGameWithDifficulty('medium')">MEDIUM</button>
         <button class="btn" onclick="startGameWithDifficulty('hard')">HARD</button>
@@ -366,6 +370,9 @@
       p2Up: false,
       p2Down: false
     };
+
+    // When true, single-player mode uses player input for both paddles
+    let singlePlayerDualControl = false;
 
     // Load user settings
     function loadUserSettings() {
@@ -951,7 +958,7 @@
     function gameLoop() {
       if (!isPaused && gameRunning) {
         player1.update();
-        if (gameMode === 2) {
+        if (gameMode === 2 || singlePlayerDualControl) {
           player2.update();
         } else {
           updateAI();
@@ -1124,13 +1131,24 @@
       const p2Text = document.getElementById('p2Text');
       const p1ControlText = document.getElementById('p1ControlText');
       if (players === 1) {
-        // AI mode
-        if (isMobile) {
-          p1ControlText.innerHTML = '<strong>Player 1:</strong> Touch Left Side';
-          p2Text.innerHTML = '<strong>AI:</strong> vs Computer';
+        // single-player: either AI or player controls both paddles
+        singlePlayerDualControl = document.getElementById('dualControlCheckbox') ? document.getElementById('dualControlCheckbox').checked : false;
+        if (singlePlayerDualControl) {
+          if (isMobile) {
+            p1ControlText.innerHTML = '<strong>Player 1:</strong> Touch Left Side';
+            p2Text.innerHTML = '<strong>Player 2:</strong> Touch Right Side (player)';
+          } else {
+            p1ControlText.innerHTML = '<strong>Player 1:</strong> W / S keys';
+            p2Text.innerHTML = '<strong>Player 2:</strong> ↑ / ↓ keys (also player controlled)';
+          }
         } else {
-          p1ControlText.innerHTML = '<strong>Player 1:</strong> W / S keys';
-          p2Text.innerHTML = '<strong>AI:</strong> vs Computer';
+          if (isMobile) {
+            p1ControlText.innerHTML = '<strong>Player 1:</strong> Touch Left Side';
+            p2Text.innerHTML = '<strong>AI:</strong> vs Computer';
+          } else {
+            p1ControlText.innerHTML = '<strong>Player 1:</strong> W / S keys';
+            p2Text.innerHTML = '<strong>AI:</strong> vs Computer';
+          }
         }
         p2Text.style.display = 'block';
       }
@@ -1223,13 +1241,28 @@
       const p1ControlText = document.getElementById('p1ControlText');
       const mobileControls = document.getElementById('mobileControls');
 
+      // Read dual-control checkbox (if present)
+      singlePlayerDualControl = document.getElementById('dualControlCheckbox') ? document.getElementById('dualControlCheckbox').checked : false;
+
       if (isMobile) {
         p1ControlText.innerHTML = '<strong>Player 1:</strong> Touch Controls';
-        p2Text.style.display = 'none';
         mobileControls.style.display = 'block';
+        if (singlePlayerDualControl) {
+          p2Text.innerHTML = '<strong>Player 2:</strong> Touch Controls (player)';
+          p2Text.style.display = 'block';
+        } else {
+          p2Text.style.display = 'none';
+        }
       } else {
-        p2Text.style.display = 'none';
-        mobileControls.style.display = 'none';
+        if (singlePlayerDualControl) {
+          p1ControlText.innerHTML = '<strong>Player 1:</strong> W / S keys';
+          p2Text.innerHTML = '<strong>Player 2:</strong> ↑ / ↓ keys (also player controlled)';
+          p2Text.style.display = 'block';
+          mobileControls.style.display = 'none';
+        } else {
+          p2Text.style.display = 'none';
+          mobileControls.style.display = 'none';
+        }
       }
 
       document.getElementById('gameModeScreen').classList.remove('active');
